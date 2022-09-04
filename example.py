@@ -51,6 +51,8 @@ class Display:
     def release(self):
         """
         Resets all displays.
+
+        This is to be used to free resources BEFORE init, not during the program.
         :return:
         """
         try:
@@ -116,10 +118,3 @@ bg_sprite = displayio.TileGrid(color_bitmap,
 splash2.append(bg_sprite)
 
 splash2.append(label.Label(terminalio.FONT, text='second display', color=0xFFFF00, x=12, y=32))
-
-time.sleep(1)
-
-displays.release()
-
-
-
