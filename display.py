@@ -38,9 +38,8 @@ class Display:
                 self.spi,
                 command=cmd,
                 chip_select=cs,
-                reset=None
             )
-            display = SSD1331(bus, width=96, height=64)
+            display = SSD1331(bus, width=96, height=64, auto_refresh=False)
             self.displays.append(display)
         return self
 

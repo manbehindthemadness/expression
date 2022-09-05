@@ -160,6 +160,8 @@ xx, yy = eye_position(48, 32)
 
 print("MEMORY ALLOCATED", gc.mem_alloc())  # noqa
 print("MEMORY FREE", gc.mem_free())  # noqa
+
+displays = [display_L, display_R]
 shut = False
 refresh = True
 while True:
@@ -171,8 +173,11 @@ while True:
 
     if not random.randint(0, 10):
         squint(random.randint(10, 20))
+        refresh = True
+
     if not random.randint(0, 10):
         glance(random.randint(-20, 20))
+        refresh = True
 
     if not random.randint(0, 25):
         xx, yy = eye_position(
@@ -192,8 +197,9 @@ while True:
         refresh = True
 
     if refresh:
-        display_L.refresh(target_frames_per_second=20)
-        display_R.refresh(target_frames_per_second=20)
+        displays.reverse()
+        for display in displays:
+            display.refresh()
     delay = random.randint(125, 500) / 1000
     refresh = False
     time.sleep(delay)
