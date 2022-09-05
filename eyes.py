@@ -16,15 +16,6 @@ iris_cx, iris_cy = dw // 2 - iris_w // 2, dh // 2 - iris_h // 2  # "center" of i
 iris_mid_x, iris_mid_y = int(iris_w / 2), int(iris_h / 2)
 
 
-background = displayio.Bitmap(96, 64, 1)
-bg_palette = displayio.Palette(1)
-bg_palette[0] = 0xffffff
-
-blink = displayio.Bitmap(96, 64, 1)
-blink_palette = displayio.Palette(1)
-blink_palette[0] = 0x000000
-
-
 iris_bitmap, iris_pal = adafruit_imageload.load("img/iris.bmp", bitmap=displayio.Bitmap, palette=displayio.Palette)
 iris_pal.make_transparent(0)
 
@@ -48,6 +39,14 @@ def display_eye_init(display, side):
     Experiment.
 
     """
+    background = displayio.Bitmap(96, 64, 1)
+    bg_palette = displayio.Palette(1)
+    bg_palette[0] = 0xffffff
+
+    blink = displayio.Bitmap(96, 64, 1)
+    blink_palette = displayio.Palette(1)
+    blink_palette[0] = 0x000000
+
     eyeball_bitmap, eyeball_pal = adafruit_imageload.load("img/eye_" + side + ".bmp", bitmap=displayio.Bitmap, palette=displayio.Palette)
     eyeball_pal.make_transparent(0)
     main = displayio.Group()
@@ -66,12 +65,12 @@ def display_eye_init(display, side):
     main.append(exp_up)
     main.append(exp_down)
     main.append(bnk)
-    return display, eyeball, iris, exp_up, exp_down, bnk
+    return display, eyeball, iris, exp_up, exp_down, bnk, bg
 
 
 displays = Display(reset, command0, command1, cs0, cs1)
-display_L, eyeball_L, iris_L, exp_up_L, exp_down_L, blink_L = display_eye_init(displays.displays[0], 'left')
-display_R, eyeball_R, iris_R, exp_up_R, exp_down_R, blink_R = display_eye_init(displays.displays[1], 'right')
+display_L, eyeball_L, iris_L, exp_up_L, exp_down_L, blink_L, bg_L = display_eye_init(displays.displays[0], 'left')
+display_R, eyeball_R, iris_R, exp_up_R, exp_down_R, blink_R, bg_R = display_eye_init(displays.displays[1], 'right')
 
 
 def eye_position(x, y):
