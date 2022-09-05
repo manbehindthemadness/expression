@@ -45,7 +45,7 @@ def display_eye_init(display, side):
 
     blink = displayio.Bitmap(96, 64, 1)
     blink_palette = displayio.Palette(1)
-    blink_palette[0] = 0x000000
+    blink_palette[0] = 0x080808
 
     eyeball_bitmap, eyeball_pal = adafruit_imageload.load("img/eye_" + side + ".bmp", bitmap=displayio.Bitmap, palette=displayio.Palette)
     eyeball_pal.make_transparent(0)
@@ -121,7 +121,6 @@ def squint(amount, top_bottom='both', left_right='both'):
     """
     u_ref = -26
     d_ref = 60
-    # TODO: Make a position reset...
     if top_bottom in ['both', 'top']:
         if left_right in ['both', 'left']:
             exp_up_L.y = u_ref + amount
@@ -153,7 +152,8 @@ while True:
         shut = False
         refresh = True
 
-    squint(random.randint(10, 20))
+    if not random.randint(0, 10):
+        squint(random.randint(10, 20))
 
     if not random.randint(0, 25):
         xx, yy = eye_position(
