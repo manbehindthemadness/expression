@@ -2,15 +2,19 @@
 Lets give a drone some eyes...
 """
 import gc
-import math, random
+import math
+import random
+import time
 import board
 import displayio
 import adafruit_imageload
 from display import Display
 
-dw, dh = 96, 64  # display dimensions
-iris_w, iris_h = 50, 50  # iris image is 110x110
+dw, dh = 96, 64
+iris_w, iris_h = 48, 50
 iris_cx, iris_cy = dw // 2 - iris_w // 2, dh // 2 - iris_h // 2  # "center" of iris image
+iris_mid_x, iris_mid_y = int(iris_w / 2), int(iris_h / 2)
+
 
 background = displayio.Bitmap(96, 64, 1)
 bg_palette = displayio.Palette(1)
@@ -73,6 +77,37 @@ thetaL, thetaR = 0, 0  # left & right eye rotational position
 dthetaL, dthetaR = 0.25, 0.25  # how fast left & right eyes spins
 r = 17  # size of eye spin
 
+
+def eye_position(x, y):
+    """
+    Updates the direction that our eyes are looking.
+    """
+    x, y = x - iris_mid_x, y - iris_mid_y
+    iris_L.x = x
+    iris_L.y = y
+    iris_R.x = x
+    iris_R.y = y
+
+    return int(iris_L.x), int(iris_R.y)
+
+
+def saccades(x, y, x_anchor, y_anchor):
+    """
+    Performs Saccadic Eye Movements
+    """
+    x_variant = int(x / 2)
+    y_variant = int(y / 2)
+    new_x_pos = random.randint(-x_variant, x_variant) + x_anchor
+    new_y_pos = random.randint(-y_variant, y_variant) + y_anchor
+    iris_L.x = new_x_pos
+    iris_L.y = new_y_pos
+    iris_R.x = new_x_pos
+    iris_R.y = new_y_pos
+
+
+xx, yy = eye_position(48, 32)
+
+
 print("MEMORY ALLOCATED", gc.mem_alloc())
 print("MEMORY FREE", gc.mem_free())
 shut = False
@@ -82,12 +117,15 @@ while True:
         blink_R.x = -200
         shut = False
 
-    iris_L.x = iris_cx + int(r * math.sin(thetaL))  # update iris positions based on angle
-    iris_L.y = iris_cy + int(r * math.cos(thetaL))
-    iris_R.x = iris_cx + int(r * math.sin(thetaL))
-    iris_R.y = iris_cy + int(r * math.cos(thetaL))
+    # iris_L.x = iris_cx + int(r * math.sin(thetaL))
+    # iris_L.y = iris_cy + int(r * math.cos(thetaL))
+    # iris_R.x = iris_cx + int(r * math.sin(thetaL))
+    # iris_R.y = iris_cy + int(r * math.cos(thetaL))
 
-    if random.randint(0, 150) == 0:  # Blink randomly.
+    if not random.randint(0, 2):
+        saccades(15, 15, xx, yy)
+
+    if not random.randint(0, 150):  # Blink randomly.
         blink_L.x = 0
         blink_R.x = 0
         shut = True
@@ -97,3 +135,6 @@ while True:
 
     display_L.refresh(target_frames_per_second=20)
     display_R.refresh(target_frames_per_second=20)
+    delay = random.randint(500, 1000) / 1000
+
+    time.sleep(delay)
