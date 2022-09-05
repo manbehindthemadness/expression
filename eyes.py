@@ -55,8 +55,8 @@ def display_eye_init(display, side):
     eyeball = displayio.TileGrid(eyeball_bitmap, pixel_shader=eyeball_pal)
     iris = displayio.TileGrid(iris_bitmap, pixel_shader=iris_pal, x=iris_cx, y=iris_cy)
 
-    exp_up = displayio.TileGrid(exp_top, pixel_shader=exp_top_pal, x=-108, y=-48)
-    exp_down = displayio.TileGrid(exp_top, pixel_shader=exp_top_pal, x=-108, y=144)
+    exp_up = displayio.TileGrid(exp_top, pixel_shader=exp_top_pal, x=-60, y=-26)
+    exp_down = displayio.TileGrid(exp_top, pixel_shader=exp_top_pal, x=-60, y=64)
 
     bnk = displayio.TileGrid(blink, pixel_shader=blink_palette, x=-200)
     main.append(bg)
@@ -115,7 +115,31 @@ def saccades(x, y, x_anchor, y_anchor):
     iris_R.y = new_y_pos
 
 
+def squint(amount, top_bottom='both', left_right='both'):
+    """
+    Makes a squint expression.
+    """
+    u_ref = -26
+    d_ref = 60
+    # TODO: Make a position reset...
+    if top_bottom in ['both', 'top']:
+        if left_right in ['both', 'left']:
+            exp_up_L.y = u_ref + amount
+            # print('left top')
+        if left_right in ['both', 'right']:
+            exp_up_R.y = u_ref + amount
+            # print('right top')
+    if top_bottom in ['both', 'bottom']:
+        if left_right in ['both', 'left']:
+            exp_down_L.y = d_ref - amount
+            # print('left bottom')
+        if left_right in ['both', 'right']:
+            exp_down_R.y = d_ref - amount
+            # print('right bottom')
+
+
 xx, yy = eye_position(48, 32)
+
 
 
 print("MEMORY ALLOCATED", gc.mem_alloc())  # noqa
@@ -128,6 +152,8 @@ while True:
         blink_R.x = -200
         shut = False
         refresh = True
+
+    squint(random.randint(10, 20))
 
     if not random.randint(0, 25):
         xx, yy = eye_position(
