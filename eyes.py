@@ -87,7 +87,7 @@ def eye_position(x, y):
     return int(iris_L.x), int(iris_R.y)
 
 
-def eye_roll(x_anchor, y_anchor, rad):
+def eye_roll(x_anchor, y_anchor, rad):  # noqa
     """
     Adds some radial movements.
     """
@@ -130,6 +130,13 @@ while True:
         shut = False
         refresh = True
 
+    if not random.randint(0, 25):
+        xx, yy = eye_position(
+            random.randint(25, 71),
+            random.randint(25, 39)
+        )
+        refresh = True
+
     if not random.randint(0, 2):
         saccades(7, 7, xx, yy)
         refresh = True
@@ -143,6 +150,6 @@ while True:
     if refresh:
         display_L.refresh(target_frames_per_second=20)
         display_R.refresh(target_frames_per_second=20)
-    delay = random.randint(250, 750) / 1000
+    delay = random.randint(125, 500) / 1000
     refresh = False
     time.sleep(delay)
