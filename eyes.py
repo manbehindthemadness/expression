@@ -56,7 +56,7 @@ def display_eye_init(display, side):
     iris = displayio.TileGrid(iris_bitmap, pixel_shader=iris_pal, x=iris_cx, y=iris_cy)
 
     exp_up = displayio.TileGrid(exp_top, pixel_shader=exp_top_pal, x=-60, y=-26)
-    exp_down = displayio.TileGrid(exp_top, pixel_shader=exp_top_pal, x=-60, y=64)
+    exp_down = displayio.TileGrid(exp_bottom, pixel_shader=exp_bottom_pal, x=-60, y=-5)
 
     bnk = displayio.TileGrid(blink, pixel_shader=blink_palette, x=-200)
     main.append(bg)
@@ -120,21 +120,38 @@ def squint(amount, top_bottom='both', left_right='both'):
     Makes a squint expression.
     """
     u_ref = -26
-    d_ref = 60
+    d_ref = -5
     if top_bottom in ['both', 'top']:
         if left_right in ['both', 'left']:
             exp_up_L.y = u_ref + amount
-            # print('left top')
         if left_right in ['both', 'right']:
             exp_up_R.y = u_ref + amount
-            # print('right top')
     if top_bottom in ['both', 'bottom']:
         if left_right in ['both', 'left']:
             exp_down_L.y = d_ref - amount
-            # print('left bottom')
         if left_right in ['both', 'right']:
             exp_down_R.y = d_ref - amount
-            # print('right bottom')
+
+
+def glance(amount, top_bottom='both', left_right='both'):
+    """
+    Like squint but for diagonal expressions.
+    """
+    ref = -60
+    if amount > 0:
+        amount += 25
+    else:
+        amount -= 25
+    if top_bottom in ['both', 'top']:
+        if left_right in ['both', 'left']:
+            exp_up_L.x = ref + amount
+        if left_right in ['both', 'right']:
+            exp_up_R.x = ref + amount
+    if top_bottom in ['both', 'bottom']:
+        if left_right in ['both', 'left']:
+            exp_down_L.x = ref + amount
+        if left_right in ['both', 'right']:
+            exp_down_R.x = ref + amount
 
 
 xx, yy = eye_position(48, 32)
@@ -154,6 +171,8 @@ while True:
 
     if not random.randint(0, 10):
         squint(random.randint(10, 20))
+    if not random.randint(0, 10):
+        glance(random.randint(-20, 20))
 
     if not random.randint(0, 25):
         xx, yy = eye_position(
