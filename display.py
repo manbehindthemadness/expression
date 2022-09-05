@@ -19,6 +19,9 @@ class Display:
         self.commands = [cmd0, cmd1]
         self.cable_selects = [cs0, cs1]
         self.spi = busio.SPI(clock=clock, MOSI=mosi)
+        self.spi.try_lock()
+        self.spi.configure(baudrate=1000000)
+        self.spi.unlock()
         self.rst = rst
         self.activate()
 
