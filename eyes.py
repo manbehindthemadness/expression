@@ -28,6 +28,16 @@ class Eyes:
             command0=board.D0,
             command1=board.D1,
     ):
+        self.reset = reset
+
+        self.cs0 = cs0
+        self.cs1 = cs1
+
+        self.command0 = command0
+        self.command1 = command1
+
+        self.displays = Display(self.reset, self.command0, self.command1, self.cs0, self.cs1)
+
         self.dw, self.dh = 96, 64
         self.iris_w, self.iris_h = 48, 50
         self.iris_cx, self.iris_cy = self.dw // 2 - self.iris_w // 2, self.dh // 2 - self.iris_h // 2
@@ -68,15 +78,6 @@ class Eyes:
         )
         self.exp_bottom_right_pal.make_transparent(0)
 
-        self.reset = reset
-
-        self.cs0 = cs0
-        self.cs1 = cs1
-
-        self.command0 = command0
-        self.command1 = command1
-
-        self.displays = Display(self.reset, self.command0, self.command1, self.cs0, self.cs1)
         self.display_L, self.eyeball_L, self.iris_L, self.exp_up_LL, self.exp_down_LL, self.exp_up_LR, self.exp_down_LR, \
             self.blink_L, self.bg_L = self.display_eye_init(self.displays.displays[1], 'left')
         self.display_R, self.eyeball_R, self.iris_R, self.exp_up_RL, self.exp_down_RL, self.exp_up_RR, self.exp_down_RR, \
@@ -149,7 +150,7 @@ class Eyes:
         main.append(bnk)
         return display, eyeball, iris, exp_up_left, exp_down_left, exp_up_right, exp_down_right, bnk, bg
 
-    def eye_position(self, x: int, y: int, left_right: HORIZONTALS = 'both') -> tuple[int, int]:
+    async def eye_position(self, x: int, y: int, left_right: HORIZONTALS = 'both') -> tuple[int, int]:
         """
         Updates the direction that our eyes are looking.
         """
@@ -160,12 +161,13 @@ class Eyes:
         if left_right in ['both', 'right']:
             self.iris_R.x = x
             self.iris_R.y = y
+        await self.displays.refresh()
         self.left_anchor = self.iris_L.x, self.iris_L.y
         self.right_anchor = self.iris_R.x, self.iris_R.y
         return int(self.iris_L.x), int(self.iris_R.y)
 
 
-    def eye_roll(self, x_anchor: int, y_anchor: int, rad: int):  # noqa
+    async def eye_roll(self, x_anchor: int, y_anchor: int, rad: int):  # noqa
         """
         Adds some radial movements.
         """
@@ -175,9 +177,10 @@ class Eyes:
         self.iris_R.y = self.iris_cy + int(rad * math.cos(self.thetaL))
         self.thetaL -= self.dthetaL  # update angles (negative for clockwise motion)
         self.thetaR -= self.dthetaR
+        await self.displays.refresh()
         return self
 
-    def saccades(self, x: int, y: int):
+    async def saccades(self, x: int, y: int):
         """
         Performs Saccadic Eye Movements
         """
@@ -195,9 +198,10 @@ class Eyes:
         self.iris_L.y = new_ly_pos
         self.iris_R.x = new_rx_pos
         self.iris_R.y = new_ry_pos
+        await self.displays.refresh()
         return self
 
-    def squint(
+    async def squint(
             self,
             amount: int,
             top_bottom: VERTICALS = 'both',
@@ -213,6 +217,7 @@ class Eyes:
             if left_right in ['both', 'right']:
                 self.exp_up_RL.y = self.u_ref + amount
                 self.exp_up_RR.y = self.u_ref + amount
+            await self.displays.refresh()
         if top_bottom in ['both', 'bottom']:
             if left_right in ['both', 'left']:
                 self.exp_down_LL.y = self.d_ref - amount
@@ -220,9 +225,10 @@ class Eyes:
             if left_right in ['both', 'right']:
                 self.exp_down_RL.y = self.d_ref - amount
                 self.exp_down_RR.y = self.d_ref - amount
+            await self.displays.refresh()
         return self
 
-    def glance(
+    async def glance(
             self,
             amount: int,
             top_bottom: VERTICALS = 'both',
@@ -248,6 +254,7 @@ class Eyes:
                     self.exp_up_RL.x = self.l_ref + amount
                 if right_left in ['both', 'right']:
                     self.exp_up_RR.x = self.r_ref + amount
+            await self.displays.refresh()
         if top_bottom in ['both', 'bottom']:
             if left_right in ['both', 'left']:
                 if right_left in ['both', 'left']:
@@ -259,6 +266,7 @@ class Eyes:
                     self.exp_down_RL.x = self.l_ref + amount
                 if right_left in ['both', 'right']:
                     self.exp_down_RR.x = self.r_ref + amount
+            await self.displays.refresh()
         if bug == 'none' and self.eyeball_L.x and self.eyeball_R.x:
             self.eyeball_L.x = 0
             self.eyeball_R.x = 0
@@ -266,4 +274,5 @@ class Eyes:
             self.eyeball_L.x = 200
         if bug in ['both', 'right']:
             self.eyeball_R.x = 200
+        await self.displays.refresh()
         return self

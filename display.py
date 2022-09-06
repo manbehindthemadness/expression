@@ -15,9 +15,10 @@ class Display:
     displays = list()
 
     def __init__(self, rst, cmd0, cmd1, cs0, cs1, clock=board.SCK, mosi=board.MOSI):
-        self.release()
         self.commands = [cmd0, cmd1]
         self.cable_selects = [cs0, cs1]
+        self.release()
+        displayio.release_displays()
         self.spi = busio.SPI(clock=clock, MOSI=mosi)
         self.spi.try_lock()
         self.spi.configure(baudrate=100000000)
@@ -43,19 +44,19 @@ class Display:
                 bus,
                 width=96,
                 height=64,
-                # auto_refresh=False
+                auto_refresh=False
             )
             self.displays.append(display)
         return self
 
-    def reset(self):
+    async def reset(self):
         """
         reset.
         """
         self.rst.value = False
         self.rst.value = True
 
-    def release(self):
+    async def release(self):
         """
         Resets all displays.
 
@@ -63,7 +64,24 @@ class Display:
         :return:
         """
         try:
-            self.reset()
+            await self.reset()
         except AttributeError:
             pass
         displayio.release_displays()
+
+    async def _refresh(self, display: displayio.Display):
+        """
+        Refreshes a screen.
+        """
+        display.refresh()
+        return self
+
+    async def refresh(self):
+        """
+        Refreshes our screens.
+        :return:
+        """
+        self.displays.reverse()
+        for display in self.displays:
+            await self._refresh(display)
+        return self
