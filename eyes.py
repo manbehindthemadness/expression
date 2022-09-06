@@ -64,8 +64,8 @@ def display_eye_init(display, side):
     exp_up_left = displayio.TileGrid(exp_top_left, pixel_shader=exp_top_left_pal, x=-60, y=-26)
     exp_down_left = displayio.TileGrid(exp_bottom_left, pixel_shader=exp_bottom_left_pal, x=-60, y=-5)
 
-    exp_up_right = displayio.TileGrid(exp_top_right, pixel_shader=exp_top_right_pal, x=48, y=-26)
-    exp_down_right = displayio.TileGrid(exp_bottom_right, pixel_shader=exp_bottom_right_pal, x=48, y=-5)
+    exp_up_right = displayio.TileGrid(exp_top_right, pixel_shader=exp_top_right_pal, x=-6, y=-26)
+    exp_down_right = displayio.TileGrid(exp_bottom_right, pixel_shader=exp_bottom_right_pal, x=-6, y=-5)
 
     bnk = displayio.TileGrid(blink, pixel_shader=blink_palette, x=-200)
     main.append(bg)
@@ -153,7 +153,7 @@ def glance(amount, top_bottom='both', left_right='both', right_left='both'):
     Like squint but for diagonal expressions.
     """
     l_ref = -60
-    r_ref = 48
+    r_ref = -6
     if amount > 0:
         amount += 25
     else:
@@ -185,7 +185,11 @@ def glance(amount, top_bottom='both', left_right='both', right_left='both'):
 xx, yy = eye_position(48, 32)
 
 
+verticals = ['both', 'top', 'bottom']
+horizontals = ['both', 'left', 'right']
 
+
+gc.collect()
 print("MEMORY ALLOCATED", gc.mem_alloc())  # noqa
 print("MEMORY FREE", gc.mem_free())  # noqa
 
@@ -200,11 +204,11 @@ while True:
         refresh = True
 
     if not random.randint(0, 10):
-        squint(random.randint(10, 20))
+        squint(random.randint(0, 20), random.choice(verticals), random.choice(horizontals))
         refresh = True
 
     if not random.randint(0, 10):
-        glance(random.randint(-20, 20))
+        glance(random.randint(-30, 30), random.choice(verticals), random.choice(horizontals), random.choice(horizontals))
         refresh = True
 
     if not random.randint(0, 25):
