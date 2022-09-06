@@ -4,7 +4,6 @@ Lets give a drone some eyes...
 import gc
 import random
 import time
-import board
 from eyes import Eyes
 
 e = Eyes()

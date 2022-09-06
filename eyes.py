@@ -9,6 +9,12 @@ import adafruit_imageload
 from display import Display
 
 
+SIDES = ['left', 'right']
+VERTICALS = ['both', 'top', 'bottom']
+HORIZONTALS = ['both', 'left', 'right']
+BUGS = ['none', 'left', 'right', 'both']
+
+
 class Eyes:
     """
     This is our fancy eye-control class
@@ -90,9 +96,23 @@ class Eyes:
         self.l_ref = -60
         self.r_ref = -6
 
-    def display_eye_init(self, display, side):  # noqa
+    def display_eye_init(
+            self,
+            display: displayio.Display,
+            side: SIDES
+    ) -> tuple[
+        displayio.Display,
+        displayio.TileGrid,
+        displayio.TileGrid,
+        displayio.TileGrid,
+        displayio.TileGrid,
+        displayio.TileGrid,
+        displayio.TileGrid,
+        displayio.TileGrid,
+        displayio.TileGrid,
+    ]:
         """
-        Experiment.
+        Fires up the displays..
 
         """
         background = displayio.Bitmap(96, 64, 1)
@@ -129,7 +149,7 @@ class Eyes:
         main.append(bnk)
         return display, eyeball, iris, exp_up_left, exp_down_left, exp_up_right, exp_down_right, bnk, bg
 
-    def eye_position(self, x, y, left_right='both'):
+    def eye_position(self, x: int, y: int, left_right: HORIZONTALS = 'both') -> tuple[int, int]:
         """
         Updates the direction that our eyes are looking.
         """
@@ -145,7 +165,7 @@ class Eyes:
         return int(self.iris_L.x), int(self.iris_R.y)
 
 
-    def eye_roll(self, x_anchor, y_anchor, rad):  # noqa
+    def eye_roll(self, x_anchor: int, y_anchor: int, rad: int):  # noqa
         """
         Adds some radial movements.
         """
@@ -157,7 +177,7 @@ class Eyes:
         self.thetaR -= self.dthetaR
         return self
 
-    def saccades(self, x, y):
+    def saccades(self, x: int, y: int):
         """
         Performs Saccadic Eye Movements
         """
@@ -177,7 +197,12 @@ class Eyes:
         self.iris_R.y = new_ry_pos
         return self
 
-    def squint(self, amount, top_bottom='both', left_right='both'):
+    def squint(
+            self,
+            amount: int,
+            top_bottom: VERTICALS = 'both',
+            left_right: HORIZONTALS = 'both'
+    ):
         """
         Makes a squint expression.
         """
@@ -197,7 +222,14 @@ class Eyes:
                 self.exp_down_RR.y = self.d_ref - amount
         return self
 
-    def glance(self, amount, top_bottom='both', left_right='both', right_left='both', bug='none'):
+    def glance(
+            self,
+            amount: int,
+            top_bottom: VERTICALS = 'both',
+            left_right: HORIZONTALS = 'both',
+            right_left: HORIZONTALS = 'both',
+            bug: BUGS = 'none'
+    ):
         """
         Like squint but for diagonal expressions.
         """
