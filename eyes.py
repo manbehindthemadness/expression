@@ -30,7 +30,7 @@ class Eyes:
     ):
         self.dw, self.dh = 96, 64
         self.iris_w, self.iris_h = 48, 50
-        self.iris_cx, self.iris_cy = self.dw // 2 - self.iris_w // 2, self.dh // 2 - self.iris_h // 2  # "center" of iris image
+        self.iris_cx, self.iris_cy = self.dw // 2 - self.iris_w // 2, self.dh // 2 - self.iris_h // 2
         self.iris_mid_x, self.iris_mid_y = int(self.iris_w / 2), int(self.iris_h / 2)
 
         self.iris_bitmap, self.iris_pal = adafruit_imageload.load(
@@ -141,7 +141,7 @@ class Eyes:
         bnk = displayio.TileGrid(blink, pixel_shader=blink_palette, x=-200)
         main.append(bg)
         main.append(iris)
-        main.append(eyeball)  # add eyeball & iris to main group
+        main.append(eyeball)
         main.append(exp_up_left)
         main.append(exp_down_left)
         main.append(exp_up_right)
