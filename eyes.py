@@ -80,20 +80,21 @@ def display_eye_init(display, side):
 
 
 displays = Display(reset, command0, command1, cs0, cs1)
-display_L, eyeball_L, iris_L, exp_up_LL, exp_down_LL, exp_up_LR, exp_down_LR, blink_L, bg_L = display_eye_init(displays.displays[0], 'left')
-display_R, eyeball_R, iris_R, exp_up_RL, exp_down_RL, exp_up_RR, exp_down_RR, blink_R, bg_R = display_eye_init(displays.displays[1], 'right')
+display_L, eyeball_L, iris_L, exp_up_LL, exp_down_LL, exp_up_LR, exp_down_LR, blink_L, bg_L = display_eye_init(displays.displays[1], 'left')
+display_R, eyeball_R, iris_R, exp_up_RL, exp_down_RL, exp_up_RR, exp_down_RR, blink_R, bg_R = display_eye_init(displays.displays[0], 'right')
 
 
-def eye_position(x, y):
+def eye_position(x, y, left_right='both'):
     """
     Updates the direction that our eyes are looking.
     """
     x, y = x - iris_mid_x, y - iris_mid_y
-    iris_L.x = x
-    iris_L.y = y
-    iris_R.x = x
-    iris_R.y = y
-
+    if left_right in ['both', 'left']:
+        iris_L.x = x
+        iris_L.y = y
+    if left_right in ['both', 'right']:
+        iris_R.x = x
+        iris_R.y = y
     return int(iris_L.x), int(iris_R.y)
 
 
@@ -112,18 +113,24 @@ def eye_roll(x_anchor, y_anchor, rad):  # noqa
     thetaR -= dthetaR
 
 
-def saccades(x, y, x_anchor, y_anchor):
+def saccades(x, y):
     """
     Performs Saccadic Eye Movements
     """
+    lx_anchor, ly_anchor = iris_L.x, iris_L.y
+    rx_anchor, ry_anchor = iris_R.x, iris_R.y
     x_variant = int(x / 2)
     y_variant = int(y / 2)
-    new_x_pos = random.randint(-x_variant, x_variant) + x_anchor
-    new_y_pos = random.randint(-y_variant, y_variant) + y_anchor
-    iris_L.x = new_x_pos
-    iris_L.y = new_y_pos
-    iris_R.x = new_x_pos
-    iris_R.y = new_y_pos
+    x_variant = random.randint(-x_variant, x_variant)
+    y_variant = random.randint(-y_variant, y_variant)
+    new_lx_pos = x_variant + lx_anchor
+    new_ly_pos = y_variant + ly_anchor
+    new_rx_pos = x_variant + rx_anchor
+    new_ry_pos = y_variant + ry_anchor
+    iris_L.x = new_lx_pos
+    iris_L.y = new_ly_pos
+    iris_R.x = new_rx_pos
+    iris_R.y = new_ry_pos
 
 
 def squint(amount, top_bottom='both', left_right='both'):
@@ -148,7 +155,7 @@ def squint(amount, top_bottom='both', left_right='both'):
             exp_down_RR.y = d_ref - amount
 
 
-def glance(amount, top_bottom='both', left_right='both', right_left='both'):
+def glance(amount, top_bottom='both', left_right='both', right_left='both', bug='none'):
     """
     Like squint but for diagonal expressions.
     """
@@ -180,14 +187,22 @@ def glance(amount, top_bottom='both', left_right='both', right_left='both'):
                 exp_down_RL.x = l_ref + amount
             if right_left in ['both', 'right']:
                 exp_down_RR.x = r_ref + amount
+    if bug == 'none' and eyeball_L.x and eyeball_R.x:
+        eyeball_L.x = 0
+        eyeball_R.x = 0
+    if bug in ['both', 'left']:
+        eyeball_L.x = 200
+    if bug in ['both', 'right']:
+        eyeball_R.x = 200
 
 
-xx, yy = eye_position(48, 32)
+eye_position(48, 32)
 
 
 verticals = ['both', 'top', 'bottom']
 horizontals = ['both', 'left', 'right']
-
+bugs = ['none', 'left', 'none', 'right', 'none', 'both', 'none']
+eyes = ['both', 'both', 'left', 'both', 'both', 'right', 'both', 'both']
 
 gc.collect()
 print("MEMORY ALLOCATED", gc.mem_alloc())  # noqa
@@ -208,18 +223,25 @@ while True:
         refresh = True
 
     if not random.randint(0, 10):
-        glance(random.randint(-30, 30), random.choice(verticals), random.choice(horizontals), random.choice(horizontals))
+        glance(
+            random.randint(-30, 30),
+            random.choice(verticals),
+            random.choice(horizontals),
+            random.choice(horizontals),
+            random.choice(bugs)
+        )
         refresh = True
 
     if not random.randint(0, 25):
-        xx, yy = eye_position(
+        eye_position(
             random.randint(25, 71),
-            random.randint(25, 39)
+            random.randint(25, 39),
+            random.choice(eyes)
         )
         refresh = True
 
     if not random.randint(0, 2):
-        saccades(7, 7, xx, yy)
+        saccades(7, 7)
         refresh = True
 
     if not random.randint(0, 50):  # Blink randomly.
