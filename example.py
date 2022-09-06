@@ -1,64 +1,70 @@
+"""
+Lets give a drone some eyes...
+"""
+import gc
+import random
 import time
 import board
-import displayio
-import terminalio
-from adafruit_display_text import label
-from display import Display
+from eyes import Eyes
+
+e = Eyes()
 
 
-reset = board.D9
+verticals = ['both', 'top', 'bottom']
+horizontals = ['both', 'left', 'right']
+bugs = ['none', 'left', 'none', 'right', 'none', 'both', 'none']
+eyes = ['both', 'both', 'left', 'both', 'both', 'right', 'both', 'both']
 
-cs0 = board.D3
-cs1 = board.D2
+gc.collect()
+print("MEMORY ALLOCATED", gc.mem_alloc())  # noqa
+print("MEMORY FREE", gc.mem_free())  # noqa
 
-command0 = board.D0
-command1 = board.D1
+displays = [e.display_L, e.display_R]
+shut = False
+refresh = True
+while True:
+    if shut:  # If eyes are shut, open them.
+        e.blink_L.x = -200
+        e.blink_R.x = -200
+        shut = False
+        refresh = True
 
+    if not random.randint(0, 10):
+        e.squint(random.randint(0, 20), random.choice(verticals), random.choice(horizontals))
+        refresh = True
 
-splash1 = displayio.Group()
-splash2 = displayio.Group()
+    if not random.randint(0, 10):
+        e.glance(
+            random.randint(-30, 30),
+            random.choice(verticals),
+            random.choice(horizontals),
+            random.choice(horizontals),
+            random.choice(bugs)
+        )
+        refresh = True
 
+    if not random.randint(0, 25):
+        e.eye_position(
+            random.randint(25, 71),
+            random.randint(25, 39),
+            random.choice(eyes)
+        )
+        refresh = True
 
-displays = Display(reset, command0, command1, cs0, cs1)
+    if not random.randint(0, 2):
+        e.saccades(7, 7)
+        refresh = True
 
-display0 = displays.displays[0]
-display0.show(splash1)
+    if not random.randint(0, 50):  # Blink randomly.
+        e.blink_L.x = 0
+        e.blink_R.x = 0
+        shut = True
+        refresh = True
 
-display1 = displays.displays[1]
-display1.show(splash2)
-
-color_bitmap = displayio.Bitmap(96, 64, 1)
-color_palette = displayio.Palette(1)
-color_palette[0] = 0x00FF00 # Bright Green
-
-bg_sprite = displayio.TileGrid(color_bitmap,
-                               pixel_shader=color_palette,
-                               x=0, y=0)
-splash1.append(bg_sprite)
-
-# Draw a smaller inner rectangle
-inner_bitmap = displayio.Bitmap(86, 54, 1)
-inner_palette = displayio.Palette(1)
-inner_palette[0] = 0xAA0088 # Purple
-inner_sprite = displayio.TileGrid(inner_bitmap,
-                                  pixel_shader=inner_palette,
-                                  x=5, y=5)
-splash1.append(inner_sprite)
-
-# Draw a label
-text = "Hello World!"
-text_area = label.Label(terminalio.FONT, text=text, color=0xFFFF00, x=12, y=32)
-splash1.append(text_area)
-
-time.sleep(1)
-
-color_bitmap = displayio.Bitmap(96, 64, 1)
-color_palette = displayio.Palette(1)
-color_palette[0] = 0x00FF00 # Bright Green
-
-bg_sprite = displayio.TileGrid(color_bitmap,
-                               pixel_shader=color_palette,
-                               x=0, y=0)
-splash2.append(bg_sprite)
-
-splash2.append(label.Label(terminalio.FONT, text='second display', color=0xFFFF00, x=12, y=32))
+    if refresh:
+        displays.reverse()
+        for display in displays:
+            display.refresh()
+    delay = random.randint(125, 500) / 1000
+    refresh = False
+    time.sleep(delay)
