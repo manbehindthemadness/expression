@@ -276,3 +276,15 @@ class Eyes:
             self.eyeball_R.x = 200
         await self.displays.refresh()
         return self
+
+    async def blink(self):
+        """
+        Aptly named.
+        """
+        self.blink_L.x = 0
+        self.blink_R.x = 0
+        await self.displays.refresh()
+        self.blink_L.x = -200
+        self.blink_R.x = -200
+        await self.displays.refresh()
+        return self

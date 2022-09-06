@@ -22,16 +22,14 @@ async def main():
     gc.collect()
     print("MEMORY ALLOCATED", gc.mem_alloc())  # noqa
     print("MEMORY FREE", gc.mem_free())  # noqa
-    shut = False
     while True:
         try:
-            if shut:  # If eyes are shut, open them.
-                e.blink_L.x = -200
-                e.blink_R.x = -200
-                shut = False
-
             if not random.randint(0, 10):
-                await e.squint(random.randint(0, 20), random.choice(verticals), random.choice(horizontals))
+                await e.squint(
+                    random.randint(0, 20),
+                    random.choice(verticals),
+                    random.choice(horizontals)
+                )
 
             if not random.randint(0, 10):
                 await e.glance(
@@ -53,9 +51,7 @@ async def main():
                 await e.saccades(7, 7)
 
             if not random.randint(0, 50):  # Blink randomly.
-                e.blink_L.x = 0
-                e.blink_R.x = 0
-                shut = True
+                await e.blink()
 
             delay = random.randint(125, 500) / 1000
             await asyncio.sleep(delay)
