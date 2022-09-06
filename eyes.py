@@ -19,11 +19,17 @@ iris_mid_x, iris_mid_y = int(iris_w / 2), int(iris_h / 2)
 iris_bitmap, iris_pal = adafruit_imageload.load("img/iris.bmp", bitmap=displayio.Bitmap, palette=displayio.Palette)
 iris_pal.make_transparent(0)
 
-exp_top, exp_top_pal = adafruit_imageload.load("img/exp_top.bmp", bitmap=displayio.Bitmap, palette=displayio.Palette)
-exp_top_pal.make_transparent(0)
+exp_top_left, exp_top_left_pal = adafruit_imageload.load("img/exp_top_left.bmp", bitmap=displayio.Bitmap, palette=displayio.Palette)
+exp_top_left_pal.make_transparent(0)
 
-exp_bottom, exp_bottom_pal = adafruit_imageload.load("img/exp_bottom.bmp", bitmap=displayio.Bitmap, palette=displayio.Palette)
-exp_bottom_pal.make_transparent(0)
+exp_bottom_left, exp_bottom_left_pal = adafruit_imageload.load("img/exp_bottom_left.bmp", bitmap=displayio.Bitmap, palette=displayio.Palette)
+exp_bottom_left_pal.make_transparent(0)
+
+exp_top_right, exp_top_right_pal = adafruit_imageload.load("img/exp_top_right.bmp", bitmap=displayio.Bitmap, palette=displayio.Palette)
+exp_top_right_pal.make_transparent(0)
+
+exp_bottom_right, exp_bottom_right_pal = adafruit_imageload.load("img/exp_bottom_right.bmp", bitmap=displayio.Bitmap, palette=displayio.Palette)
+exp_bottom_right_pal.make_transparent(0)
 
 reset = board.D9
 
@@ -55,22 +61,27 @@ def display_eye_init(display, side):
     eyeball = displayio.TileGrid(eyeball_bitmap, pixel_shader=eyeball_pal)
     iris = displayio.TileGrid(iris_bitmap, pixel_shader=iris_pal, x=iris_cx, y=iris_cy)
 
-    exp_up = displayio.TileGrid(exp_top, pixel_shader=exp_top_pal, x=-60, y=-26)
-    exp_down = displayio.TileGrid(exp_bottom, pixel_shader=exp_bottom_pal, x=-60, y=-5)
+    exp_up_left = displayio.TileGrid(exp_top_left, pixel_shader=exp_top_left_pal, x=-60, y=-26)
+    exp_down_left = displayio.TileGrid(exp_bottom_left, pixel_shader=exp_bottom_left_pal, x=-60, y=-5)
+
+    exp_up_right = displayio.TileGrid(exp_top_right, pixel_shader=exp_top_right_pal, x=48, y=-26)
+    exp_down_right = displayio.TileGrid(exp_bottom_right, pixel_shader=exp_bottom_right_pal, x=48, y=-5)
 
     bnk = displayio.TileGrid(blink, pixel_shader=blink_palette, x=-200)
     main.append(bg)
     main.append(iris)
     main.append(eyeball)  # add eyeball & iris to main group
-    main.append(exp_up)
-    main.append(exp_down)
+    main.append(exp_up_left)
+    main.append(exp_down_left)
+    main.append(exp_up_right)
+    main.append(exp_down_right)
     main.append(bnk)
-    return display, eyeball, iris, exp_up, exp_down, bnk, bg
+    return display, eyeball, iris, exp_up_left, exp_down_left, exp_up_right, exp_down_right, bnk, bg
 
 
 displays = Display(reset, command0, command1, cs0, cs1)
-display_L, eyeball_L, iris_L, exp_up_L, exp_down_L, blink_L, bg_L = display_eye_init(displays.displays[0], 'left')
-display_R, eyeball_R, iris_R, exp_up_R, exp_down_R, blink_R, bg_R = display_eye_init(displays.displays[1], 'right')
+display_L, eyeball_L, iris_L, exp_up_LL, exp_down_LL, exp_up_LR, exp_down_LR, blink_L, bg_L = display_eye_init(displays.displays[0], 'left')
+display_R, eyeball_R, iris_R, exp_up_RL, exp_down_RL, exp_up_RR, exp_down_RR, blink_R, bg_R = display_eye_init(displays.displays[1], 'right')
 
 
 def eye_position(x, y):
@@ -123,35 +134,52 @@ def squint(amount, top_bottom='both', left_right='both'):
     d_ref = -5
     if top_bottom in ['both', 'top']:
         if left_right in ['both', 'left']:
-            exp_up_L.y = u_ref + amount
+            exp_up_LL.y = u_ref + amount
+            exp_up_LR.y = u_ref + amount
         if left_right in ['both', 'right']:
-            exp_up_R.y = u_ref + amount
+            exp_up_RL.y = u_ref + amount
+            exp_up_RR.y = u_ref + amount
     if top_bottom in ['both', 'bottom']:
         if left_right in ['both', 'left']:
-            exp_down_L.y = d_ref - amount
+            exp_down_LL.y = d_ref - amount
+            exp_down_LR.y = d_ref - amount
         if left_right in ['both', 'right']:
-            exp_down_R.y = d_ref - amount
+            exp_down_RL.y = d_ref - amount
+            exp_down_RR.y = d_ref - amount
 
 
-def glance(amount, top_bottom='both', left_right='both'):
+def glance(amount, top_bottom='both', left_right='both', right_left='both'):
     """
     Like squint but for diagonal expressions.
     """
-    ref = -60
+    l_ref = -60
+    r_ref = 48
     if amount > 0:
         amount += 25
     else:
         amount -= 25
     if top_bottom in ['both', 'top']:
         if left_right in ['both', 'left']:
-            exp_up_L.x = ref + amount
+            if right_left in ['both', 'left']:
+                exp_up_LL.x = l_ref + amount
+            if right_left in ['both', 'right']:
+                exp_up_LR.x = r_ref + amount
         if left_right in ['both', 'right']:
-            exp_up_R.x = ref + amount
+            if right_left in ['both', 'left']:
+                exp_up_RL.x = l_ref + amount
+            if right_left in ['both', 'right']:
+                exp_up_RR.x = r_ref + amount
     if top_bottom in ['both', 'bottom']:
         if left_right in ['both', 'left']:
-            exp_down_L.x = ref + amount
+            if right_left in ['both', 'left']:
+                exp_down_LL.x = l_ref + amount
+            if right_left in ['both', 'right']:
+                exp_down_LR.x = r_ref + amount
         if left_right in ['both', 'right']:
-            exp_down_R.x = ref + amount
+            if right_left in ['both', 'left']:
+                exp_down_RL.x = l_ref + amount
+            if right_left in ['both', 'right']:
+                exp_down_RR.x = r_ref + amount
 
 
 xx, yy = eye_position(48, 32)
