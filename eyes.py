@@ -89,8 +89,8 @@ class Eyes:
         self.lx_anchor, self.ly_anchor = self.left_anchor
         self.rx_anchor, self.ry_anchor = self.right_anchor
 
-        self.thetaL, self.thetaR = 0, 0  # left & right eye rotational position
-        self.dthetaL, self.dthetaR = 0.25, 0.25  # how fast left & right eyes spins
+        self.theta_L, self.theta_R = 0, 0  # left & right eye rotational position
+        self.d_theta_L, self.d_theta_R = 0.25, 0.25  # how fast left & right eyes spins
 
         self.u_ref = -26
         self.d_ref = -5
@@ -113,7 +113,7 @@ class Eyes:
         displayio.TileGrid,
     ]:
         """
-        Fires up the displays..
+        Fires up the displays.
 
         """
         background = displayio.Bitmap(96, 64, 1)
@@ -171,12 +171,12 @@ class Eyes:
         """
         Adds some radial movements.
         """
-        self.iris_L.x = self.iris_cx + int(rad * math.sin(self.thetaL))
-        self.iris_L.y = self.iris_cy + int(rad * math.cos(self.thetaL))
-        self.iris_R.x = self.iris_cx + int(rad * math.sin(self.thetaL))
-        self.iris_R.y = self.iris_cy + int(rad * math.cos(self.thetaL))
-        self.thetaL -= self.dthetaL  # update angles (negative for clockwise motion)
-        self.thetaR -= self.dthetaR
+        self.iris_L.x = self.iris_cx + int(rad * math.sin(self.theta_L))
+        self.iris_L.y = self.iris_cy + int(rad * math.cos(self.theta_L))
+        self.iris_R.x = self.iris_cx + int(rad * math.sin(self.theta_L))
+        self.iris_R.y = self.iris_cy + int(rad * math.cos(self.theta_L))
+        self.theta_L -= self.d_theta_L  # update angles (negative for clockwise motion)
+        self.theta_R -= self.d_theta_R
         await self.displays.refresh()
         return self
 
