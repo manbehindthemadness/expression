@@ -83,11 +83,16 @@ displays = Display(reset, command0, command1, cs0, cs1)
 display_L, eyeball_L, iris_L, exp_up_LL, exp_down_LL, exp_up_LR, exp_down_LR, blink_L, bg_L = display_eye_init(displays.displays[1], 'left')
 display_R, eyeball_R, iris_R, exp_up_RL, exp_down_RL, exp_up_RR, exp_down_RR, blink_R, bg_R = display_eye_init(displays.displays[0], 'right')
 
+left_anchor = iris_L.x, iris_L.y
+right_anchor = iris_R.x, iris_R.y
+
 
 def eye_position(x, y, left_right='both'):
     """
     Updates the direction that our eyes are looking.
     """
+    global left_anchor
+    global right_anchor
     x, y = x - iris_mid_x, y - iris_mid_y
     if left_right in ['both', 'left']:
         iris_L.x = x
@@ -95,6 +100,8 @@ def eye_position(x, y, left_right='both'):
     if left_right in ['both', 'right']:
         iris_R.x = x
         iris_R.y = y
+    left_anchor = iris_L.x, iris_L.y
+    right_anchor = iris_R.x, iris_R.y
     return int(iris_L.x), int(iris_R.y)
 
 
@@ -117,8 +124,10 @@ def saccades(x, y):
     """
     Performs Saccadic Eye Movements
     """
-    lx_anchor, ly_anchor = iris_L.x, iris_L.y
-    rx_anchor, ry_anchor = iris_R.x, iris_R.y
+    global left_anchor
+    global right_anchor
+    lx_anchor, ly_anchor = left_anchor
+    rx_anchor, ry_anchor = right_anchor
     x_variant = int(x / 2)
     y_variant = int(y / 2)
     x_variant = random.randint(-x_variant, x_variant)
