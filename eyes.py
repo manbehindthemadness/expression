@@ -40,7 +40,7 @@ command0 = board.D0
 command1 = board.D1
 
 
-def display_eye_init(display, side):
+def display_eye_init(display, side):  # noqa
     """
     Experiment.
 
