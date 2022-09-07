@@ -5,6 +5,7 @@ import math
 import random
 import board
 import displayio
+import asyncio
 import adafruit_imageload
 from display import Display
 
@@ -13,6 +14,7 @@ SIDES = ['left', 'right']
 VERTICALS = ['both', 'top', 'bottom']
 HORIZONTALS = ['both', 'left', 'right']
 BUGS = ['none', 'left', 'right', 'both']
+OPENS = ['open', 'close', 'both']
 
 
 class Eyes:
@@ -40,7 +42,10 @@ class Eyes:
 
         self.dw, self.dh = 96, 64
         self.iris_w, self.iris_h = 48, 50
-        self.iris_cx, self.iris_cy = self.dw // 2 - self.iris_w // 2, self.dh // 2 - self.iris_h // 2
+
+        self.iris_l_cx = self.iris_r_cx = self.dh // 2 - self.iris_h // 2
+        self.iris_l_cy = self.iris_r_cy = self.dw // 2 - self.iris_w // 2
+
         self.iris_mid_x, self.iris_mid_y = int(self.iris_w / 2), int(self.iris_h / 2)
 
         self.iris_bitmap, self.iris_pal = adafruit_imageload.load(
@@ -97,6 +102,15 @@ class Eyes:
         self.l_ref = -60
         self.r_ref = -6
 
+        self.transitioning = False
+
+    async def wait(self):
+        """
+        Waits for a transition to complete.
+        """
+        while self.transitioning:
+            await asyncio.sleep(0.0001)
+
     def display_eye_init(
             self,
             display: displayio.Display,
@@ -131,7 +145,7 @@ class Eyes:
         display.show(main)
         bg = displayio.TileGrid(background, pixel_shader=bg_palette)
         eyeball = displayio.TileGrid(eyeball_bitmap, pixel_shader=eyeball_pal)
-        iris = displayio.TileGrid(self.iris_bitmap, pixel_shader=self.iris_pal, x=self.iris_cx, y=self.iris_cy)
+        iris = displayio.TileGrid(self.iris_bitmap, pixel_shader=self.iris_pal, x=self.iris_l_cx, y=self.iris_l_cy)
 
         exp_up_left = displayio.TileGrid(self.exp_top_left, pixel_shader=self.exp_top_left_pal, x=-60, y=-26)
         exp_down_left = displayio.TileGrid(self.exp_bottom_left, pixel_shader=self.exp_bottom_left_pal, x=-60, y=-5)
@@ -150,40 +164,92 @@ class Eyes:
         main.append(bnk)
         return display, eyeball, iris, exp_up_left, exp_down_left, exp_up_right, exp_down_right, bnk, bg
 
-    async def eye_position(self, x: int, y: int, left_right: HORIZONTALS = 'both') -> tuple[int, int]:
+    async def eye_position(self, x: int, y: int, left_right: HORIZONTALS = 'both', rate: int = 1) -> tuple[int, int]:
         """
         Updates the direction that our eyes are looking.
         """
-        x, y = x - self.iris_mid_x, y - self.iris_mid_y
-        if left_right in ['both', 'left']:
-            self.iris_L.x = x
-            self.iris_L.y = y
-        if left_right in ['both', 'right']:
-            self.iris_R.x = x
-            self.iris_R.y = y
-        await self.displays.refresh()
+        def transition(des_x: int, des_y: int, item: displayio.TileGrid, speed: int) -> bool:
+            """
+            Calculates transition.
+            """
+            result = True
+            cur_x = item.x
+            if cur_x not in range(des_x - speed, des_x + speed):
+                if des_x < cur_x:
+                    item.x -= speed
+                    result = False
+                if des_x > cur_x:
+                    item.x += speed
+                    result = False
+            cur_y = item.y
+            if cur_y not in range(des_y - speed, des_y + speed):
+                if des_y < cur_y:
+                    item.y -= speed
+                    result = False
+                if des_y > cur_y:
+                    item.y += speed
+                    result = False
+            return result
+
+        await self.wait()
+        desired_x, desired_y = x - self.iris_mid_x, y - self.iris_mid_y
+        self.transitioning = True
+        criteria = [True]
+        if left_right == 'both':
+            criteria = [False, False]
+        if left_right == 'left':
+            criteria = [False, True]
+        if left_right == 'right':
+            criteria = [True, False]
+        while False in criteria:
+            if left_right in ['both', 'left']:
+                criteria[0] = transition(desired_x, desired_y, self.iris_L, rate)
+            if left_right in ['both', 'right']:
+                criteria[1] = transition(desired_x, desired_y, self.iris_R, rate)
+            await self.displays.refresh()
+            await asyncio.sleep(0.0001)
         self.left_anchor = self.iris_L.x, self.iris_L.y
         self.right_anchor = self.iris_R.x, self.iris_R.y
+        self.transitioning = False
         return int(self.iris_L.x), int(self.iris_R.y)
 
 
-    async def eye_roll(self, x_anchor: int, y_anchor: int, rad: int):  # noqa
+    async def eye_roll(self, rad: int, direction: SIDES, iterations: int, left_right: HORIZONTALS = 'both'):  # noqa
         """
         Adds some radial movements.
         """
-        self.iris_L.x = self.iris_cx + int(rad * math.sin(self.theta_L))
-        self.iris_L.y = self.iris_cy + int(rad * math.cos(self.theta_L))
-        self.iris_R.x = self.iris_cx + int(rad * math.sin(self.theta_L))
-        self.iris_R.y = self.iris_cy + int(rad * math.cos(self.theta_L))
-        self.theta_L -= self.d_theta_L  # update angles (negative for clockwise motion)
-        self.theta_R -= self.d_theta_R
-        await self.displays.refresh()
+        await self.wait()
+        self.transitioning = True
+        self.iris_l_cx = (self.dw // 2 - self.iris_w // 2) - self.iris_L.x
+        self.iris_l_cy = (self.dh // 2 - self.iris_h // 2) - self.iris_L.y
+        self.iris_r_cx = (self.dw // 2 - self.iris_w // 2) - self.iris_R.x
+        self.iris_r_cy = (self.dh // 2 - self.iris_h // 2) - self.iris_R.y
+        while iterations:
+            self.iris_L.x = self.iris_l_cx + int(rad * math.sin(self.theta_L))
+            self.iris_L.y = self.iris_l_cy + int(rad * math.cos(self.theta_L))
+            self.iris_R.x = self.iris_r_cx + int(rad * math.sin(self.theta_L))
+            self.iris_R.y = self.iris_r_cy + int(rad * math.cos(self.theta_L))
+            if direction == 'right':
+                if left_right in ['both', 'left']:
+                    self.theta_L -= self.d_theta_L
+                if left_right in ['both', 'right']:
+                    self.theta_R -= self.d_theta_R
+            if direction == 'left':
+                if left_right in ['both', 'left']:
+                    self.theta_L += self.d_theta_L
+                if left_right in ['both', 'right']:
+                    self.theta_R += self.d_theta_R
+            await self.displays.refresh()
+            await asyncio.sleep(0.0001)
+            iterations -= 1
+        self.transitioning = False
         return self
 
     async def saccades(self, x: int, y: int):
         """
         Performs Saccadic Eye Movements
         """
+        await self.wait()
         self.lx_anchor, self.ly_anchor = self.left_anchor
         self.rx_anchor, self.ry_anchor = self.right_anchor
         x_variant = int(x / 2)
@@ -205,11 +271,14 @@ class Eyes:
             self,
             amount: int,
             top_bottom: VERTICALS = 'both',
-            left_right: HORIZONTALS = 'both'
+            left_right: HORIZONTALS = 'both',
+            mask: bool = False
     ):
         """
         Makes a squint expression.
         """
+        if mask:
+            await self.blink('close')
         if top_bottom in ['both', 'top']:
             if left_right in ['both', 'left']:
                 self.exp_up_LL.y = self.u_ref + amount
@@ -226,6 +295,8 @@ class Eyes:
                 self.exp_down_RL.y = self.d_ref - amount
                 self.exp_down_RR.y = self.d_ref - amount
             await self.displays.refresh()
+        if mask:
+            await self.blink('open')
         return self
 
     async def glance(
@@ -234,7 +305,8 @@ class Eyes:
             top_bottom: VERTICALS = 'both',
             left_right: HORIZONTALS = 'both',
             right_left: HORIZONTALS = 'both',
-            bug: BUGS = 'none'
+            bug: BUGS = 'none',
+            mask: bool = False
     ):
         """
         Like squint but for diagonal expressions.
@@ -243,6 +315,8 @@ class Eyes:
             amount += 25
         else:
             amount -= 25
+        if mask:
+            await self.blink('close')
         if top_bottom in ['both', 'top']:
             if left_right in ['both', 'left']:
                 if right_left in ['both', 'left']:
@@ -275,16 +349,20 @@ class Eyes:
         if bug in ['both', 'right']:
             self.eyeball_R.x = 200
         await self.displays.refresh()
+        if mask:
+            await self.blink('open')
         return self
 
-    async def blink(self):
+    async def blink(self, open_close: OPENS = 'both'):
         """
         Aptly named.
         """
-        self.blink_L.x = 0
-        self.blink_R.x = 0
-        await self.displays.refresh()
-        self.blink_L.x = -200
-        self.blink_R.x = -200
-        await self.displays.refresh()
+        if open_close in ['both', 'close']:
+            self.blink_L.x = 0
+            self.blink_R.x = 0
+            await self.displays.refresh()
+        if open_close in ['both', 'close']:
+            self.blink_L.x = -200
+            self.blink_R.x = -200
+            await self.displays.refresh()
         return self
