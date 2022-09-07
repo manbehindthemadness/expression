@@ -57,6 +57,12 @@ async def main():
             if not random.randint(0, 25):  # Blink randomly.
                 await e.blink()
 
+            if not random.randint(0, 10):
+                await e.background_fill(
+                    random.randint(0, 16777215),
+                    random.choice(horizontals)
+                )
+
             # if not random.randint(0, 25):
             #     await e.eye_roll(
             #         random.randint(0, 10),

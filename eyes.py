@@ -9,7 +9,6 @@ import asyncio
 import adafruit_imageload
 from display import Display
 
-
 SIDES = ['left', 'right']
 VERTICALS = ['both', 'top', 'bottom']
 HORIZONTALS = ['both', 'left', 'right']
@@ -124,7 +123,7 @@ class Eyes:
         displayio.TileGrid,
         displayio.TileGrid,
         displayio.TileGrid,
-        displayio.TileGrid,
+        displayio.Palette,
     ]:
         """
         Fires up the displays.
@@ -138,8 +137,11 @@ class Eyes:
         blink_palette = displayio.Palette(1)
         blink_palette[0] = 0x080808
 
-        eyeball_bitmap, eyeball_pal = adafruit_imageload.load("img/eye_" + side + ".bmp", bitmap=displayio.Bitmap,
-                                                              palette=displayio.Palette)
+        eyeball_bitmap, eyeball_pal = adafruit_imageload.load(
+            "img/eye_" + side + ".bmp",
+            bitmap=displayio.Bitmap,
+            palette=displayio.Palette
+        )
         eyeball_pal.make_transparent(0)
         main = displayio.Group()
         display.show(main)
@@ -162,12 +164,13 @@ class Eyes:
         main.append(exp_up_right)
         main.append(exp_down_right)
         main.append(bnk)
-        return display, eyeball, iris, exp_up_left, exp_down_left, exp_up_right, exp_down_right, bnk, bg
+        return display, eyeball, iris, exp_up_left, exp_down_left, exp_up_right, exp_down_right, bnk, bg_palette
 
     async def eye_position(self, x: int, y: int, left_right: HORIZONTALS = 'both', rate: int = 1) -> tuple[int, int]:
         """
         Updates the direction that our eyes are looking.
         """
+
         def transition(des_x: int, des_y: int, item: displayio.TileGrid, speed: int) -> bool:
             """
             Calculates transition.
@@ -212,7 +215,6 @@ class Eyes:
         self.right_anchor = self.iris_R.x, self.iris_R.y
         self.transitioning = False
         return int(self.iris_L.x), int(self.iris_R.y)
-
 
     async def eye_roll(self, rad: int, direction: SIDES, iterations: int, left_right: HORIZONTALS = 'both'):  # noqa
         """
@@ -365,4 +367,15 @@ class Eyes:
             self.blink_L.x = -200
             self.blink_R.x = -200
             await self.displays.refresh()
+        return self
+
+    async def background_fill(self, fill: int = 0xffffff, left_right: HORIZONTALS = 'both'):
+        """
+        Changes the background color of the eyes.
+        """
+        if left_right in ['both', 'left']:
+            self.bg_L[0] = fill
+        if left_right in ['both', 'right']:
+            self.bg_R[0] = fill
+        await self.displays.refresh()
         return self
