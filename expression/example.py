@@ -21,7 +21,6 @@ def test():
         """
         e = Eyes()
 
-        directions = ['left', 'right']
         verticals = ['both', 'top', 'bottom']
         horizontals = ['both', 'left', 'right']
         bugs = ['none', 'left', 'none', 'right', 'none', 'both', 'none']
@@ -33,52 +32,47 @@ def test():
         while True:
             try:
                 if not random.randint(0, 25):
-                    await e.squint(
-                        random.randint(0, 10),
-                        random.choice(verticals),
-                        random.choice(horizontals),
-                        mask=True
+                    await e.squint(  # Note that the squint sprites are in halves, top and bottom.
+                        amount=random.randint(0, 10),  # Intensity of the expression.
+                        top_bottom=random.choice(verticals),  # Top or bottom lid(s).
+                        left_right=random.choice(horizontals),  # Left or right lid(s).
+                        mask=True  # Mask the transition by blinking.
                     )
 
                 if not random.randint(0, 25):
-                    await e.glance(
-                        random.randint(-15, 15),
-                        random.choice(verticals),
-                        random.choice(horizontals),
-                        random.choice(horizontals),
-                        random.choice(bugs),
-                        mask=True
+                    await e.glance(  # Note that the glance sprites are in quadrants.
+                        amount=random.randint(-15, 15),  # Intensity of the expression.
+                        top_bottom=random.choice(verticals),  # Top or bottom lid(s).
+                        left_right=random.choice(horizontals),  # Left or right lid(s).
+                        right_left=random.choice(horizontals),  # Left or right lid-halves.
+                        bug=random.choice(bugs),  # Go full-on bug-eyed.
+                        mask=True  # Mask the transition by blinking.
                     )
 
                 if not random.randint(0, 10):
                     await e.eye_position(
-                        random.randint(25, 71),
-                        random.randint(25, 39),
-                        random.choice(eyes),
-                        random.randint(1, 6)
+                        x=random.randint(25, 71),
+                        y=random.randint(25, 39),
+                        left_right=random.choice(eyes),  # Left, right, or both eyes.
+                        rate=random.randint(1, 6)  # Speed of movement.
                     )
 
                 if not random.randint(0, 2):
-                    await e.saccades(7, 7)
+                    await e.saccades(  # Random eye twitch.
+                        x=7,  # Allowed variance x.
+                        y=7  # Allowed variance y.
+                    )
 
                 if not random.randint(0, 25):
-                    await e.blink()
+                    await e.blink()  # Blink our eyes.
 
                 if not random.randint(0, 10):
                     await e.background_fill(
-                        random.randint(0, 16777215),
-                        random.choice(horizontals)
+                        fill=random.randint(0, 16777215),  # Choose a random color.
+                        left_right=random.choice(horizontals)  # Left or right eye-backgrounds.
                     )
 
-                # if not random.randint(0, 25):
-                #     await e.eye_roll(
-                #         random.randint(0, 10),
-                #         random.choice(directions),
-                #         random.randint(5, 20),
-                #         random.choice(horizontals)
-                #     )
-
-                delay = random.randint(125, 500) / 1000
+                delay = random.randint(125, 500) / 1000  # Keep the cycle uneven enough to look convincing.
                 await asyncio.sleep(delay)
             except KeyboardInterrupt:
                 pass
