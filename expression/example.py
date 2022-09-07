@@ -29,6 +29,7 @@ def test():
         gc.collect()
         print("MEMORY ALLOCATED", gc.mem_alloc())  # noqa
         print("MEMORY FREE", gc.mem_free())  # noqa
+        await e.start()
         while True:
             try:
                 if not random.randint(0, 25):

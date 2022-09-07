@@ -6,7 +6,10 @@ import random
 import board
 import displayio
 import asyncio
+import random
 import adafruit_imageload
+from adafruit_bitmap_font import bitmap_font  # noqa
+from adafruit_display_text import label  # noqa
 try:
     from display import Display
 except ImportError:
@@ -17,6 +20,8 @@ VERTICALS = ['both', 'top', 'bottom']
 HORIZONTALS = ['both', 'left', 'right']
 BUGS = ['none', 'left', 'right', 'both']
 OPENS = ['open', 'close', 'both']
+font = bitmap_font.load_font("expression/img/ldr.bdf", displayio.Bitmap)
+ICONS = list('abcdefghijklmnopqrstuvwx123456789')
 
 
 class Eyes:
@@ -41,6 +46,7 @@ class Eyes:
         self.command1 = command1
 
         self.displays = Display(self.reset, self.command0, self.command1, self.cs0, self.cs1)
+        self.displays.reset()
 
         self.dw, self.dh = 96, 64
         self.iris_w, self.iris_h = 48, 50
@@ -86,9 +92,9 @@ class Eyes:
         self.exp_bottom_right_pal.make_transparent(0)
 
         self.display_L, self.eyeball_L, self.iris_L, self.exp_up_LL, self.exp_down_LL, self.exp_up_LR, self.exp_down_LR, \
-            self.blink_L, self.blink_pal_L, self.bg_L = self.display_eye_init(self.displays.displays[1], 'left')
+            self.blink_L, self.blink_pal_L, self.bg_L, self.text_L = self.display_eye_init(self.displays.displays[1], 'left')
         self.display_R, self.eyeball_R, self.iris_R, self.exp_up_RL, self.exp_down_RL, self.exp_up_RR, self.exp_down_RR, \
-            self.blink_R, self.blink_pal_R, self.bg_R = self.display_eye_init(self.displays.displays[0], 'right')
+            self.blink_R, self.blink_pal_R, self.bg_R, self.text_R = self.display_eye_init(self.displays.displays[0], 'right')
 
         self.left_anchor = self.iris_L.x, self.iris_L.y
         self.right_anchor = self.iris_R.x, self.iris_R.y
@@ -128,6 +134,7 @@ class Eyes:
         displayio.TileGrid,
         displayio.Palette,
         displayio.Palette,
+        label
     ]:
         """
         Fires up the displays.
@@ -159,7 +166,11 @@ class Eyes:
         exp_up_right = displayio.TileGrid(self.exp_top_right, pixel_shader=self.exp_top_right_pal, x=-6, y=-26)
         exp_down_right = displayio.TileGrid(self.exp_bottom_right, pixel_shader=self.exp_bottom_right_pal, x=-6, y=-5)
 
-        bnk = displayio.TileGrid(blink, pixel_shader=blink_palette, x=-200)
+        bnk = displayio.TileGrid(blink, pixel_shader=blink_palette)
+
+        text = label.Label(font, text='a')
+        text.x = -100
+        text.y = 30
         main.append(bg)
         main.append(iris)
         main.append(eyeball)
@@ -168,7 +179,8 @@ class Eyes:
         main.append(exp_up_right)
         main.append(exp_down_right)
         main.append(bnk)
-        return display, eyeball, iris, exp_up_left, exp_down_left, exp_up_right, exp_down_right, bnk, blink_palette, bg_palette
+        main.append(text)
+        return display, eyeball, iris, exp_up_left, exp_down_left, exp_up_right, exp_down_right, bnk, blink_palette, bg_palette, text
 
     async def eye_position(self, x: int, y: int, left_right: HORIZONTALS = 'both', rate: int = 1) -> tuple[int, int]:
         """
@@ -359,17 +371,21 @@ class Eyes:
             await self.blink('open')
         return self
 
-    async def blink(self, open_close: OPENS = 'both'):
+    async def blink(self, open_close: OPENS = 'both', left_right: HORIZONTALS = 'both'):
         """
         Aptly named.
         """
         if open_close in ['both', 'close']:
-            self.blink_L.x = 0
-            self.blink_R.x = 0
+            if left_right in ['both', 'left']:
+                self.blink_L.x = 0
+            if left_right in ['both', 'right']:
+                self.blink_R.x = 0
             await self.displays.refresh()
-        if open_close in ['both', 'close']:
-            self.blink_L.x = -200
-            self.blink_R.x = -200
+        if open_close in ['both', 'open']:
+            if left_right in ['both', 'left']:
+                self.blink_L.x = -200
+            if left_right in ['both', 'right']:
+                self.blink_R.x = -200
             await self.displays.refresh()
         return self
 
@@ -393,4 +409,55 @@ class Eyes:
         if left_right in ['both', 'right']:
             self.blink_pal_R[0] = fill
         await self.displays.refresh()
+        return self
+
+    async def text_icon(
+            self,
+            icon_left: ICONS = None,
+            icon_right: ICONS = None,
+            length: int = 1,
+            left_right: HORIZONTALS = 'both',
+            open: bool = True
+    ):
+        """
+        Displays a cool icon instead of the eyeball graphic.
+        :return:
+        """
+        self.transitioning = True
+        await self.blink('close', left_right)
+        if left_right in ['both', 'left']:
+            if icon_left is None:
+                icon_left = random.choice(ICONS)
+            self.text_L.text = icon_left
+            self.text_L.x = 23
+        if left_right in ['both', 'right']:
+            if icon_right is None:
+                icon_right = random.choice(ICONS)
+            self.text_R.text = icon_right
+            self.text_R.x = 23
+        print(icon_left, icon_right)
+        await self.displays.refresh()
+        await asyncio.sleep(length)
+        if open:
+            if left_right in ['both', 'left']:
+                self.text_L.text = ''
+                self.text_L.x = -100
+            if left_right in ['both', 'right']:
+                self.text_R.text = ''
+                self.text_R.x = -100
+            await self.displays.refresh()
+            await self.blink('open', left_right)
+            self.transitioning = False
+        return self
+
+    async def start(self, show: bool = True):
+        """
+        Gets us started :)
+        """
+        if show:
+            await self.text_icon(open=False)
+            await self.text_icon(open=False)
+            await self.text_icon(length=2)
+        else:
+            await self.blink('open')
         return self
