@@ -5,4 +5,5 @@ This library is so straight-forward it really doesn't need a whole read-the-docs
 Just look at example_main.py and expression/exammple.py for general use.
 
 ![Wiring](wiring.jpg)
-![Imgur Image](https://i.imgur.com/sRR77LW.mp4)
+
+https://i.imgur.com/sRR77LW.mp4
