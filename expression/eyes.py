@@ -7,7 +7,10 @@ import board
 import displayio
 import asyncio
 import adafruit_imageload
-from display import Display
+try:
+    from display import Display
+except ImportError:
+    from .display import Display
 
 SIDES = ['left', 'right']
 VERTICALS = ['both', 'top', 'bottom']
@@ -48,44 +51,44 @@ class Eyes:
         self.iris_mid_x, self.iris_mid_y = int(self.iris_w / 2), int(self.iris_h / 2)
 
         self.iris_bitmap, self.iris_pal = adafruit_imageload.load(
-            "img/iris.bmp",
+            "expression/img/iris.bmp",
             bitmap=displayio.Bitmap,
             palette=displayio.Palette
         )
         self.iris_pal.make_transparent(0)
 
         self.exp_top_left, self.exp_top_left_pal = adafruit_imageload.load(
-            "img/exp_top_left.bmp",
+            "expression/img/exp_top_left.bmp",
             bitmap=displayio.Bitmap,
             palette=displayio.Palette
         )
         self.exp_top_left_pal.make_transparent(0)
 
         self.exp_bottom_left, self.exp_bottom_left_pal = adafruit_imageload.load(
-            "img/exp_bottom_left.bmp",
+            "expression/img/exp_bottom_left.bmp",
             bitmap=displayio.Bitmap,
             palette=displayio.Palette
         )
         self.exp_bottom_left_pal.make_transparent(0)
 
         self.exp_top_right, self.exp_top_right_pal = adafruit_imageload.load(
-            "img/exp_top_right.bmp",
+            "expression/img/exp_top_right.bmp",
             bitmap=displayio.Bitmap,
             palette=displayio.Palette
         )
         self.exp_top_right_pal.make_transparent(0)
 
         self.exp_bottom_right, self.exp_bottom_right_pal = adafruit_imageload.load(
-            "img/exp_bottom_right.bmp",
+            "expression/img/exp_bottom_right.bmp",
             bitmap=displayio.Bitmap,
             palette=displayio.Palette
         )
         self.exp_bottom_right_pal.make_transparent(0)
 
         self.display_L, self.eyeball_L, self.iris_L, self.exp_up_LL, self.exp_down_LL, self.exp_up_LR, self.exp_down_LR, \
-            self.blink_L, self.bg_L = self.display_eye_init(self.displays.displays[1], 'left')
+            self.blink_L, self.blink_pal_L, self.bg_L = self.display_eye_init(self.displays.displays[1], 'left')
         self.display_R, self.eyeball_R, self.iris_R, self.exp_up_RL, self.exp_down_RL, self.exp_up_RR, self.exp_down_RR, \
-            self.blink_R, self.bg_R = self.display_eye_init(self.displays.displays[0], 'right')
+            self.blink_R, self.blink_pal_R, self.bg_R = self.display_eye_init(self.displays.displays[0], 'right')
 
         self.left_anchor = self.iris_L.x, self.iris_L.y
         self.right_anchor = self.iris_R.x, self.iris_R.y
@@ -124,6 +127,7 @@ class Eyes:
         displayio.TileGrid,
         displayio.TileGrid,
         displayio.Palette,
+        displayio.Palette,
     ]:
         """
         Fires up the displays.
@@ -138,7 +142,7 @@ class Eyes:
         blink_palette[0] = 0x080808
 
         eyeball_bitmap, eyeball_pal = adafruit_imageload.load(
-            "img/eye_" + side + ".bmp",
+            "expression/img/eye_" + side + ".bmp",
             bitmap=displayio.Bitmap,
             palette=displayio.Palette
         )
@@ -164,7 +168,7 @@ class Eyes:
         main.append(exp_up_right)
         main.append(exp_down_right)
         main.append(bnk)
-        return display, eyeball, iris, exp_up_left, exp_down_left, exp_up_right, exp_down_right, bnk, bg_palette
+        return display, eyeball, iris, exp_up_left, exp_down_left, exp_up_right, exp_down_right, bnk, blink_palette, bg_palette
 
     async def eye_position(self, x: int, y: int, left_right: HORIZONTALS = 'both', rate: int = 1) -> tuple[int, int]:
         """
@@ -377,5 +381,16 @@ class Eyes:
             self.bg_L[0] = fill
         if left_right in ['both', 'right']:
             self.bg_R[0] = fill
+        await self.displays.refresh()
+        return self
+
+    async def foreground_fill(self, fill: int = 0xffffff, left_right: HORIZONTALS = 'both'):
+        """
+        Changes the foreground blink color of the eyes.
+        """
+        if left_right in ['both', 'left']:
+            self.blink_pal_L[0] = fill
+        if left_right in ['both', 'right']:
+            self.blink_pal_R[0] = fill
         await self.displays.refresh()
         return self
