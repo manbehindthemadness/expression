@@ -51,8 +51,10 @@ class Eyes:
         self.dw, self.dh = 96, 64
         self.iris_w, self.iris_h = 48, 50
 
-        self.iris_l_cx = self.iris_r_cx = self.dh // 2 - self.iris_h // 2
-        self.iris_l_cy = self.iris_r_cy = self.dw // 2 - self.iris_w // 2
+        self.iris_l_cy = self.iris_r_cx = self.dh // 2 - self.iris_h // 2
+        self.iris_l_cx = self.iris_r_cy = self.dw // 2 - self.iris_w // 2
+
+        print(self.iris_l_cx, self.iris_r_cy)
 
         self.iris_mid_x, self.iris_mid_y = int(self.iris_w / 2), int(self.iris_h / 2)
 
@@ -109,6 +111,9 @@ class Eyes:
         self.d_ref = -5
         self.l_ref = -60
         self.r_ref = -6
+
+        self.bg_l_fill = 0xffffff
+        self.bg_r_fill = 0xffffff
 
         self.transitioning = False
 
@@ -394,9 +399,9 @@ class Eyes:
         Changes the background color of the eyes.
         """
         if left_right in ['both', 'left']:
-            self.bg_L[0] = fill
+            self.bg_L[0] = self.bg_l_fill = fill
         if left_right in ['both', 'right']:
-            self.bg_R[0] = fill
+            self.bg_R[0] = self.bg_r_fill = fill
         await self.displays.refresh()
         return self
 
@@ -417,7 +422,7 @@ class Eyes:
             icon_right: ICONS = None,
             length: int = 1,
             left_right: HORIZONTALS = 'both',
-            open: bool = True
+            _open: bool = True
     ):
         """
         Displays a cool icon instead of the eyeball graphic.
@@ -429,22 +434,27 @@ class Eyes:
             if icon_left is None:
                 icon_left = random.choice(ICONS)
             self.text_L.text = icon_left
-            self.text_L.x = 23
+            self.text_L.color = self.bg_l_fill
+            self.text_L.x = self.iris_L.x
+            self.text_L.y = self.iris_L.y + 20
         if left_right in ['both', 'right']:
             if icon_right is None:
                 icon_right = random.choice(ICONS)
             self.text_R.text = icon_right
-            self.text_R.x = 23
-        print(icon_left, icon_right)
+            self.text_R.color = self.bg_r_fill
+            self.text_R.x = self.iris_R.x
+            self.text_R.y = self.iris_R.y + 20
         await self.displays.refresh()
         await asyncio.sleep(length)
-        if open:
+        if _open:
             if left_right in ['both', 'left']:
                 self.text_L.text = ''
                 self.text_L.x = -100
+                self.text_L.y = 0
             if left_right in ['both', 'right']:
                 self.text_R.text = ''
                 self.text_R.x = -100
+                self.text_R.y = 0
             await self.displays.refresh()
             await self.blink('open', left_right)
             self.transitioning = False
@@ -455,8 +465,9 @@ class Eyes:
         Gets us started :)
         """
         if show:
-            await self.text_icon(open=False)
-            await self.text_icon(open=False)
+            await self.text_icon(left_right='right', _open=False)
+            await self.text_icon(left_right='left', _open=False)
+            await self.text_icon(left_right='right', _open=False)
             await self.text_icon(length=2)
         else:
             await self.blink('open')

@@ -73,6 +73,12 @@ def test():
                         left_right=random.choice(horizontals)  # Left or right eye-backgrounds.
                     )
 
+                if not random.randint(0, 50):
+                    await e.text_icon(
+                        length=random.randint(1, 3),
+                        left_right=random.choice(horizontals)
+                    )
+
                 delay = random.randint(125, 500) / 1000  # Keep the cycle uneven enough to look convincing.
                 await asyncio.sleep(delay)
             except KeyboardInterrupt:
