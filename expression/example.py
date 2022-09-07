@@ -55,7 +55,7 @@ def test():
                         x=random.randint(25, 71),
                         y=random.randint(25, 39),
                         left_right=random.choice(eyes),  # Left, right, or both eyes.
-                        rate=random.randint(1, 6)  # Speed of movement.
+                        rate=random.randint(4, 8)  # Speed of movement.
                     )
 
                 if not random.randint(0, 2):
@@ -73,11 +73,12 @@ def test():
                         left_right=random.choice(horizontals)  # Left or right eye-backgrounds.
                     )
 
-                if not random.randint(0, 50):
-                    await e.text_icon(
-                        length=random.randint(1, 3),
+                if not random.randint(0, 75):
+                    await e.iris_to_icon(
                         left_right=random.choice(horizontals)
                     )
+                if not random.randint(0, 10):
+                    await e.iris_to_icon()
 
                 delay = random.randint(125, 500) / 1000  # Keep the cycle uneven enough to look convincing.
                 await asyncio.sleep(delay)

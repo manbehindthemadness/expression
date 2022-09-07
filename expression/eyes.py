@@ -2,7 +2,6 @@
 Lets give a drone some eyes...
 """
 import math
-import random
 import board
 import displayio
 import asyncio
@@ -54,8 +53,6 @@ class Eyes:
         self.iris_l_cy = self.iris_r_cx = self.dh // 2 - self.iris_h // 2
         self.iris_l_cx = self.iris_r_cy = self.dw // 2 - self.iris_w // 2
 
-        print(self.iris_l_cx, self.iris_r_cy)
-
         self.iris_mid_x, self.iris_mid_y = int(self.iris_w / 2), int(self.iris_h / 2)
 
         self.iris_bitmap, self.iris_pal = adafruit_imageload.load(
@@ -70,33 +67,35 @@ class Eyes:
             bitmap=displayio.Bitmap,
             palette=displayio.Palette
         )
-        self.exp_top_left_pal.make_transparent(0)
+        self.transparent(self.exp_top_left_pal)
 
         self.exp_bottom_left, self.exp_bottom_left_pal = adafruit_imageload.load(
             "expression/img/exp_bottom_left.bmp",
             bitmap=displayio.Bitmap,
             palette=displayio.Palette
         )
-        self.exp_bottom_left_pal.make_transparent(0)
+        self.transparent(self.exp_bottom_left_pal)
 
         self.exp_top_right, self.exp_top_right_pal = adafruit_imageload.load(
             "expression/img/exp_top_right.bmp",
             bitmap=displayio.Bitmap,
             palette=displayio.Palette
         )
-        self.exp_top_right_pal.make_transparent(0)
+        self.transparent(self.exp_top_right_pal)
 
         self.exp_bottom_right, self.exp_bottom_right_pal = adafruit_imageload.load(
             "expression/img/exp_bottom_right.bmp",
             bitmap=displayio.Bitmap,
             palette=displayio.Palette
         )
-        self.exp_bottom_right_pal.make_transparent(0)
+        self.transparent(self.exp_bottom_right_pal)
 
-        self.display_L, self.eyeball_L, self.iris_L, self.exp_up_LL, self.exp_down_LL, self.exp_up_LR, self.exp_down_LR, \
-            self.blink_L, self.blink_pal_L, self.bg_L, self.text_L = self.display_eye_init(self.displays.displays[1], 'left')
-        self.display_R, self.eyeball_R, self.iris_R, self.exp_up_RL, self.exp_down_RL, self.exp_up_RR, self.exp_down_RR, \
-            self.blink_R, self.blink_pal_R, self.bg_R, self.text_R = self.display_eye_init(self.displays.displays[0], 'right')
+        self.group_L, self.display_L, self.eyeball_L, self.iris_L, self.exp_up_LL, self.exp_down_LL, self.exp_up_LR, self.exp_down_LR, \
+            self.blink_L, self.blink_pal_L, self.bg_L, self.text_L, self.iris_icon_L \
+            = self.display_eye_init(self.displays.displays[1], 'left')
+        self.group_R, self.display_R, self.eyeball_R, self.iris_R, self.exp_up_RL, self.exp_down_RL, self.exp_up_RR, self.exp_down_RR, \
+            self.blink_R, self.blink_pal_R, self.bg_R, self.text_R, self.iris_icon_R \
+            = self.display_eye_init(self.displays.displays[0], 'right')
 
         self.left_anchor = self.iris_L.x, self.iris_L.y
         self.right_anchor = self.iris_R.x, self.iris_R.y
@@ -124,11 +123,21 @@ class Eyes:
         while self.transitioning:
             await asyncio.sleep(0.0001)
 
+    def transparent(self, palette: displayio.Palette):
+        """
+        This will remove everything but the black.
+        """
+        for i in range(len(palette)):
+            if i > 0:
+                palette.make_transparent(i)
+        return self
+
     def display_eye_init(
             self,
             display: displayio.Display,
             side: SIDES
     ) -> tuple[
+        displayio.Group,
         displayio.Display,
         displayio.TileGrid,
         displayio.TileGrid,
@@ -139,6 +148,7 @@ class Eyes:
         displayio.TileGrid,
         displayio.Palette,
         displayio.Palette,
+        label,
         label
     ]:
         """
@@ -158,7 +168,7 @@ class Eyes:
             bitmap=displayio.Bitmap,
             palette=displayio.Palette
         )
-        eyeball_pal.make_transparent(0)
+        self.transparent(eyeball_pal)
         main = displayio.Group()
         display.show(main)
         bg = displayio.TileGrid(background, pixel_shader=bg_palette)
@@ -173,9 +183,12 @@ class Eyes:
 
         bnk = displayio.TileGrid(blink, pixel_shader=blink_palette)
 
-        text = label.Label(font, text='a')
+        text = label.Label(font, text='')
         text.x = -100
         text.y = 30
+
+        iris_icon = label.Label(font, text='')
+
         main.append(bg)
         main.append(iris)
         main.append(eyeball)
@@ -185,7 +198,8 @@ class Eyes:
         main.append(exp_down_right)
         main.append(bnk)
         main.append(text)
-        return display, eyeball, iris, exp_up_left, exp_down_left, exp_up_right, exp_down_right, bnk, blink_palette, bg_palette, text
+        return main, display, eyeball, iris, exp_up_left, exp_down_left, exp_up_right, exp_down_right, \
+            bnk, blink_palette, bg_palette, text, iris_icon
 
     async def eye_position(self, x: int, y: int, left_right: HORIZONTALS = 'both', rate: int = 1) -> tuple[int, int]:
         """
@@ -228,14 +242,55 @@ class Eyes:
         while False in criteria:
             if left_right in ['both', 'left']:
                 criteria[0] = transition(desired_x, desired_y, self.iris_L, rate)
+                self.iris_icon_L.x = self.iris_L.x
+                self.iris_icon_L.y = self.iris_L.y + 20
             if left_right in ['both', 'right']:
                 criteria[1] = transition(desired_x, desired_y, self.iris_R, rate)
+                self.iris_icon_R.x = self.iris_R.x
+                self.iris_icon_R.y = self.iris_R.y + 20
             await self.displays.refresh()
             await asyncio.sleep(0.0001)
         self.left_anchor = self.iris_L.x, self.iris_L.y
         self.right_anchor = self.iris_R.x, self.iris_R.y
         self.transitioning = False
         return int(self.iris_L.x), int(self.iris_R.y)
+
+    async def iris_to_icon(
+            self,
+            left_right: BUGS = 'none',
+            icon_l: ICONS = None,
+            icon_r: ICONS = None,
+            color_l: int = 0x000000,
+            color_r: int = 0x000000
+    ):
+        """
+        This will swap an iris for an icon.
+        """
+        if left_right in ['both', 'left']:
+            if icon_l is None:
+                icon_l = random.choice(ICONS)
+            self.iris_icon_L.text = icon_l
+            self.iris_icon_L.color = color_l
+            self.group_L.pop(1)
+            self.group_L.insert(1, self.iris_icon_L)
+        if left_right in ['both', 'right']:
+            if icon_r is None:
+                icon_r = random.choice(ICONS)
+            self.iris_icon_R.text = icon_r
+            self.iris_icon_R.color = color_r
+            self.group_R.pop(1)
+            self.group_R.insert(1, self.iris_icon_R)
+        if left_right in ['none', 'left']:
+            self.group_R.pop(1)
+            self.group_R.insert(1, self.iris_R)
+            self.iris_icon_R.text = ''
+        if left_right in ['none', 'right']:
+            self.group_L.pop(1)
+            self.group_L.insert(1, self.iris_L)
+            self.iris_icon_L.text = ''
+        await self.displays.refresh()
+        return self
+
 
     async def eye_roll(self, rad: int, direction: SIDES, iterations: int, left_right: HORIZONTALS = 'both'):  # noqa
         """
@@ -287,6 +342,10 @@ class Eyes:
         self.iris_L.y = new_ly_pos
         self.iris_R.x = new_rx_pos
         self.iris_R.y = new_ry_pos
+        self.iris_icon_L.x = self.iris_L.x
+        self.iris_icon_L.y = self.iris_L.y + 20
+        self.iris_icon_R.x = self.iris_R.x
+        self.iris_icon_R.y = self.iris_R.y + 20
         await self.displays.refresh()
         return self
 
