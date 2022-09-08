@@ -25,7 +25,7 @@ ICONS = list('abcdefghijklmnopqrstuvwx123456789')
 
 class Eyes:
     """
-    This is our fancy eye-control class
+    This is our fancy eye-control class.
     """
 
     def __init__(
@@ -90,10 +90,12 @@ class Eyes:
         )
         self.transparent(self.exp_bottom_right_pal)
 
-        self.group_L, self.display_L, self.eyeball_L, self.iris_L, self.exp_up_LL, self.exp_down_LL, self.exp_up_LR, self.exp_down_LR, \
+        self.group_L, self.display_L, self.eyeball_L, self.iris_L, self.exp_up_LL, \
+            self.exp_down_LL, self.exp_up_LR, self.exp_down_LR, \
             self.blink_L, self.blink_pal_L, self.bg_L, self.text_L, self.iris_icon_L \
             = self.display_eye_init(self.displays.displays[1], 'left')
-        self.group_R, self.display_R, self.eyeball_R, self.iris_R, self.exp_up_RL, self.exp_down_RL, self.exp_up_RR, self.exp_down_RR, \
+        self.group_R, self.display_R, self.eyeball_R, self.iris_R, self.exp_up_RL, \
+            self.exp_down_RL, self.exp_up_RR, self.exp_down_RR, \
             self.blink_R, self.blink_pal_R, self.bg_R, self.text_R, self.iris_icon_R \
             = self.display_eye_init(self.displays.displays[0], 'right')
 
@@ -291,8 +293,7 @@ class Eyes:
         await self.displays.refresh()
         return self
 
-
-    async def eye_roll(self, rad: int, direction: SIDES, iterations: int, left_right: HORIZONTALS = 'both'):  # noqa
+    async def eye_roll(self, rad: int, direction: SIDES, iterations: int, left_right: HORIZONTALS = 'both'):
         """
         Adds some radial movements.
         """
@@ -485,7 +486,6 @@ class Eyes:
     ):
         """
         Displays a cool icon instead of the eyeball graphic.
-        :return:
         """
         self.transitioning = True
         await self.blink('close', left_right)
