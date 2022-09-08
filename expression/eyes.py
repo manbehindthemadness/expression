@@ -161,7 +161,7 @@ class Eyes:
 
         blink = displayio.Bitmap(96, 64, 1)
         blink_palette = displayio.Palette(1)
-        blink_palette[0] = 0x080808
+        blink_palette[0] = 0x000000
 
         eyeball_bitmap, eyeball_pal = adafruit_imageload.load(
             "expression/img/eye_" + side + ".bmp",
