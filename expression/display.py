@@ -21,7 +21,6 @@ class Display:
         displayio.release_displays()
         self.spi = busio.SPI(clock=clock, MOSI=mosi)
         self.spi.try_lock()
-        self.spi.configure(baudrate=100000000)
         self.spi.unlock()
         self.rst = rst
         self.activate()
@@ -39,12 +38,13 @@ class Display:
                 self.spi,
                 command=cmd,
                 chip_select=cs,
+                baudrate=60_000_000
             )
             display = SSD1331(
                 bus,
                 width=96,
                 height=64,
-                auto_refresh=False
+                auto_refresh=False,
             )
             self.displays.append(display)
         return self

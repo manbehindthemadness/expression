@@ -571,7 +571,7 @@ class Eyes:
         await self.eye_position(x=46, y=35, rate=3)
         await asyncio.sleep(2)
         await self.eye_position(x=46, y=120, left_right=random.choice(HORIZONTALS), rate=3)
-        await asyncio.sleep(2)
+        await asyncio.sleep(0.5)
         if end:
             self.screen_saving = False
             await self.blink('closed')
