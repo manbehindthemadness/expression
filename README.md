@@ -18,6 +18,8 @@ https://user-images.githubusercontent.com/24589462/189120163-dd6cd552-8273-4538-
 * Blink-to-mask to assist with low refresh-rates
 * Independent top/bottom "squint"
 * Eye-shaping sprites in quadrants allowing for many, many variations
+* Eye-position transitions with variable speed
+* Eye-rotation transitions with variable speed and radius
 * Full complement of sweet icons from Love, Death+Robots
   * https://uxuihero.com/love-death-robots-free-fan-iconfont/
 * Memory consumption of roughly 65kb
