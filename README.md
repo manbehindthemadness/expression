@@ -3,7 +3,7 @@
 Facial expressions for simple robots.
 
 This library is so straight-forward it really doesn't need a whole read-the-docs (yet).
-Just look at example_main.py and expression/exammple.py for general use.
+Just look at example_main.py and expression/example.py for general use.
 
 ![Wiring](wiring.jpg)
 
@@ -12,7 +12,7 @@ https://user-images.githubusercontent.com/24589462/189120163-dd6cd552-8273-4538-
 
 # Features (so-far)
 
-* Independent eye controll
+* Independent eye control
 * Background / foreground colors
 * Saccades movements to add realism
 * Blink-to-mask to assist with low refresh-rates
