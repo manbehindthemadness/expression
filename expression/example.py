@@ -74,10 +74,10 @@ def test():
                     )
 
                 if not random.randint(0, 75):
-                    await e.iris_to_icon(
+                    await e.iris_to_icon(  # Randomly display a sick-ass love, death and robots icon ;)
                         left_right=random.choice(horizontals)
                     )
-                if not random.randint(0, 10):
+                if not random.randint(0, 10):  # Change icons back into normal eyes.
                     await e.iris_to_icon()
 
                 delay = random.randint(125, 500) / 1000  # Keep the cycle uneven enough to look convincing.
