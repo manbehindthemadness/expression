@@ -86,3 +86,21 @@ def test():
                 pass
 
     asyncio.run(main())
+
+
+def screensaver():
+    """
+    Tests out the neat screensaver function.
+    :return:
+    """
+    async def main():
+        """
+        Teh loop.
+        :return:
+        """
+        e = Eyes()
+        # await e.start()
+        while True:
+            await e.screensaver()
+
+    asyncio.run(main())

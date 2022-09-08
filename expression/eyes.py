@@ -116,7 +116,10 @@ class Eyes:
         self.bg_l_fill = 0xffffff
         self.bg_r_fill = 0xffffff
 
+        self.left_icon = self.right_icon = None
+
         self.transitioning = False
+        self.screen_saving = False
 
     async def wait(self):
         """
@@ -241,17 +244,29 @@ class Eyes:
             criteria = [False, True]
         if left_right == 'right':
             criteria = [True, False]
-        while False in criteria:
+        if rate:
+            while False in criteria:
+                if left_right in ['both', 'left']:
+                    criteria[0] = transition(desired_x, desired_y, self.iris_L, rate)
+                    self.iris_icon_L.x = self.iris_L.x
+                    self.iris_icon_L.y = self.iris_L.y + 20
+                if left_right in ['both', 'right']:
+                    criteria[1] = transition(desired_x, desired_y, self.iris_R, rate)
+                    self.iris_icon_R.x = self.iris_R.x
+                    self.iris_icon_R.y = self.iris_R.y + 20
+                await self.displays.refresh()
+                await asyncio.sleep(0.0001)
+        else:
             if left_right in ['both', 'left']:
-                criteria[0] = transition(desired_x, desired_y, self.iris_L, rate)
+                self.iris_L.x = x
+                self.iris_L.y = y
                 self.iris_icon_L.x = self.iris_L.x
                 self.iris_icon_L.y = self.iris_L.y + 20
             if left_right in ['both', 'right']:
-                criteria[1] = transition(desired_x, desired_y, self.iris_R, rate)
+                self.iris_R.x = x
+                self.iris_R.y = y
                 self.iris_icon_R.x = self.iris_R.x
                 self.iris_icon_R.y = self.iris_R.y + 20
-            await self.displays.refresh()
-            await asyncio.sleep(0.0001)
         self.left_anchor = self.iris_L.x, self.iris_L.y
         self.right_anchor = self.iris_R.x, self.iris_R.y
         self.transitioning = False
@@ -394,12 +409,12 @@ class Eyes:
         """
         Like squint but for diagonal expressions.
         """
-        if amount > 0:
-            amount += 25
-        else:
-            amount -= 25
         if mask:
             await self.blink('close')
+        if amount > 0:
+            amount += 25
+        if amount < 0:
+            amount -= 25
         if top_bottom in ['both', 'top']:
             if left_right in ['both', 'left']:
                 if right_left in ['both', 'left']:
@@ -524,10 +539,45 @@ class Eyes:
         Gets us started :)
         """
         if show:
-            await self.text_icon(left_right='right', _open=False)
-            await self.text_icon(left_right='left', _open=False)
-            await self.text_icon(left_right='right', _open=False)
-            await self.text_icon(length=2)
+            await self.screensaver()
+            await self.screensaver()
+            await self.screensaver(end=True)
         else:
+            await self.blink('open')
+        return self
+
+    async def screensaver(self, end: bool = False):
+        """
+        A cool screen-saver because why not?
+        """
+        if not self.screen_saving:
+            self.screen_saving = True
+            self.left_icon = random.choice(ICONS)
+            self.right_icon = random.choice(ICONS)
+            await self.blink('closed')
+            await self.background_fill(0x000000)
+            await self.squint(0)
+            await self.glance(0, bug='both')
+            await self.eye_position(x=46, y=-70, rate=0)
+            await self.iris_to_icon(left_right='both', color_l=0xffffff, color_r=0xffffff, icon_l=self.left_icon, icon_r=self.right_icon)
+            await self.blink('open')
+        if self.iris_L.y == 92:
+            await self.eye_position(x=46, y=-70, left_right='left', rate=0)
+            self.left_icon = random.choice(ICONS)
+        if self.iris_R.y == 92:
+            await self.eye_position(x=46, y=-70, left_right='right', rate=0)
+            self.right_icon = random.choice(ICONS)
+        await self.iris_to_icon(left_right='both', color_l=0xffffff, color_r=0xffffff, icon_l=self.left_icon, icon_r=self.right_icon)
+        await self.eye_position(x=46, y=35, rate=3)
+        await asyncio.sleep(2)
+        await self.eye_position(x=46, y=120, left_right=random.choice(HORIZONTALS), rate=3)
+        await asyncio.sleep(2)
+        if end:
+            self.screen_saving = False
+            await self.blink('closed')
+            await self.background_fill()
+            await self.glance(0)
+            await self.iris_to_icon()
+            await self.eye_position(x=self.iris_l_cx, y=self.iris_l_cy, rate=0)
             await self.blink('open')
         return self
