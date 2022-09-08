@@ -20,8 +20,9 @@ https://user-images.githubusercontent.com/24589462/189120163-dd6cd552-8273-4538-
 * Eye-shaping sprites in quadrants allowing for many, many variations
 * Eye-position transitions with variable speed
 * Eye-rotation transitions with variable speed and radius
-* Full complement of sweet icons from Love, Death+Robots
+* Full complement of sweet icons from Love, Death+Robots 
   * https://uxuihero.com/love-death-robots-free-fan-iconfont/
+* Screensaver with slick transitions n jazz
 * Memory consumption of roughly 65kb
 
 https://user-images.githubusercontent.com/24589462/188916559-694f9836-d02d-4c66-961c-4be286e1a1f8.mp4
