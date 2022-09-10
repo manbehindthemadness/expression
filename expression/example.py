@@ -99,7 +99,6 @@ def screensaver():
         :return:
         """
         e = Eyes()
-        # await e.start()
         while True:
             await e.screensaver()
 
