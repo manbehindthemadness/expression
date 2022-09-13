@@ -19,8 +19,53 @@ VERTICALS = ['both', 'top', 'bottom']
 HORIZONTALS = ['both', 'left', 'right']
 BUGS = ['none', 'left', 'right', 'both']
 OPENS = ['open', 'close', 'both']
+CONDITIONS = [SIDES, VERTICALS, HORIZONTALS, BUGS, OPENS]
 font = bitmap_font.load_font("expression/img/ldr.bdf", displayio.Bitmap)
 ICONS = list('abcdefghijklmnopqrstuvwx123456789')
+
+
+class Decision:
+    """
+    This will handle our nested logic so we can save some memory and file size.
+    """
+    trailer = None
+
+    async def decision(
+        self,
+        variable: str,
+        conditions: list[str, str, str],  # if x in [0, 1] | y, if x in [0, 2] | z
+        actions_a = union[list, tuple],  # Y Expressions to exec.
+        actions_b = union[list, tuple],  # Z Expressions to exec.
+        trailer: tuple = None  # Operation to perform inbetween decisions.
+    ):
+        """
+        Note that actions may be in string format or alternatively we could nest conditions.
+        In the event we are nesing conditions we will pass a tuple of arguments that will be called in the form
+        ```condition(*args)```
+        """
+        self.trailer = trailer
+        if variable in [conditions[0], conditions[1]]:
+            await self.call_exec(
+                actions_a
+            )
+        if variable in [conditions[0], conditions[2]]:
+            await self.call_exec(
+                actions_b
+            )
+        return self
+
+    async def call_exec(self, operation: list):
+        """
+        Peforms the calls/executions for the logic above.
+        """
+        if isinstance(operation, list):
+            for item in operation:
+                exec(item)
+            if trailer is not None:
+                await self.trailer[0](*trailer[1])
+        elif isinstance(operation, tuple):
+            await self.decision(*operation)
+        return self
 
 
 class Eyes:
@@ -158,7 +203,6 @@ class Eyes:
     ]:
         """
         Fires up the displays.
-
         """
         background = displayio.Bitmap(96, 64, 1)
         bg_palette = displayio.Palette(1)
@@ -246,6 +290,24 @@ class Eyes:
             criteria = [True, False]
         if rate:
             while False in criteria:
+                actions_a = [
+                    'criteria[0] = transition(desired_x, desired_y, self.iris_L, rate)',
+                    'self.iris_icon_L.x = self.iris_L.x',
+                    'self.iris_icon_L.y = self.iris_L.y + 20'
+                ]
+                actions_b = [
+                    'criteria[1] = transition(desired_x, desired_y, self.iris_R, rate)',
+                    'self.iris_icon_R.x = self.iris_R.x',
+                    'self.iris_icon_R.y = self.iris_R.y + 20',
+                ]
+                await Decision.decision(
+                    left_right,
+                    ['both', 'left', 'right'],
+                    actions_a,
+                    actions_b,
+                    (self.displays.refresh, ())
+                )
+                """
                 if left_right in ['both', 'left']:
                     criteria[0] = transition(desired_x, desired_y, self.iris_L, rate)
                     self.iris_icon_L.x = self.iris_L.x
@@ -254,9 +316,30 @@ class Eyes:
                     criteria[1] = transition(desired_x, desired_y, self.iris_R, rate)
                     self.iris_icon_R.x = self.iris_R.x
                     self.iris_icon_R.y = self.iris_R.y + 20
-                await self.displays.refresh()
+                """
+                # await self.displays.refresh()
                 await asyncio.sleep(0.0001)
         else:
+            actions_a = [
+                'self.iris_L.x = x',
+                'self.iris_L.y = y',
+                'self.iris_icon_L.x = self.iris_L.x',
+                'self.iris_icon_L.y = self.iris_L.y + 20',
+            ]
+            actions_b = [
+                'self.iris_R.x = x',
+                'self.iris_R.y = y',
+                'self.iris_icon_R.x = self.iris_R.x',
+                'self.iris_icon_R.y = self.iris_R.y + 20',
+            ]
+            await Decision.decision(
+                left_right,
+                ['both', 'left', 'right'],
+                actions_a,
+                actions_b,
+
+            )
+            """
             if left_right in ['both', 'left']:
                 self.iris_L.x = x
                 self.iris_L.y = y
@@ -267,6 +350,7 @@ class Eyes:
                 self.iris_R.y = y
                 self.iris_icon_R.x = self.iris_R.x
                 self.iris_icon_R.y = self.iris_R.y + 20
+            """
         self.left_anchor = self.iris_L.x, self.iris_L.y
         self.right_anchor = self.iris_R.x, self.iris_R.y
         self.transitioning = False
@@ -283,20 +367,61 @@ class Eyes:
         """
         This will swap an iris for an icon.
         """
+        if icon_l is None:
+            icon_l = random.choice(ICONS)
+        if icon_r is None:
+            icon_r = random.choice(ICONS)
+
+        actions_a = [
+            'self.iris_icon_L.text = icon_l',
+            'self.iris_icon_L.color = color_l',
+            'self.group_L.pop(1)',
+            'self.group_L.insert(1, self.iris_icon_L)'
+        ]
+        actions_b = [
+            'self.iris_icon_R.text = icon_r',
+            'self.iris_icon_R.color = color_r',
+            'self.group_R.pop(1)',
+            'self.group_R.insert(1, self.iris_icon_R)'
+        ]
+        await Decision.decision(
+            left_right,
+            ['both', 'left', 'right'],
+            actions_a,
+            actions_b,
+            (self.displays.refresh, ())
+        )
+         """
         if left_right in ['both', 'left']:
-            if icon_l is None:
-                icon_l = random.choice(ICONS)
             self.iris_icon_L.text = icon_l
             self.iris_icon_L.color = color_l
             self.group_L.pop(1)
             self.group_L.insert(1, self.iris_icon_L)
-        if left_right in ['both', 'right']:
-            if icon_r is None:
-                icon_r = random.choice(ICONS)
+        if left_right in ['both', 'right']: 
             self.iris_icon_R.text = icon_r
             self.iris_icon_R.color = color_r
             self.group_R.pop(1)
             self.group_R.insert(1, self.iris_icon_R)
+        """
+        actions_a = [
+            'self.iris_icon_R.text = icon_r',
+            'self.iris_icon_R.color = color_r',
+            'self.group_R.pop(1)',
+            'self.group_R.insert(1, self.iris_icon_R)'
+        ]
+        actions_b = [
+            'self.group_L.pop(1)',
+            'self.group_L.insert(1, self.iris_L)',
+            'self.iris_icon_L.text = ''',
+        ]
+        await Decision.decision(
+            left_right,
+            ['none', 'left', 'right'],
+            actions_a,
+            actions_b,
+            (self.displays.refresh, ())
+        )
+        """
         if left_right in ['none', 'left']:
             self.group_R.pop(1)
             self.group_R.insert(1, self.iris_R)
@@ -305,7 +430,8 @@ class Eyes:
             self.group_L.pop(1)
             self.group_L.insert(1, self.iris_L)
             self.iris_icon_L.text = ''
-        await self.displays.refresh()
+        """
+        # await self.displays.refresh()
         return self
 
     async def eye_roll(self, rad: int, direction: SIDES, iterations: int, left_right: HORIZONTALS = 'both'):
@@ -324,16 +450,37 @@ class Eyes:
             self.iris_R.x = self.iris_r_cx + int(rad * math.sin(self.theta_L))
             self.iris_R.y = self.iris_r_cy + int(rad * math.cos(self.theta_L))
             if direction == 'right':
+                await Dicision.decision(
+                    left_right,
+                    ['both', 'left', 'right'],
+                    ['self.theta_L -= self.d_theta_L'],
+                    ['self.theta_R -= self.d_theta_R'],
+                    (self.displays.refresh, ())
+                )
+
+                """
                 if left_right in ['both', 'left']:
                     self.theta_L -= self.d_theta_L
                 if left_right in ['both', 'right']:
                     self.theta_R -= self.d_theta_R
+                """
             if direction == 'left':
+                await Decision.decision(
+                    left_right,
+                    ['both', 'left', 'right'],
+                    ['self.theta_L += self.d_theta_L'],
+                    ['self.theta_R += self.d_theta_R'],
+                    (self.displays.refresh, ())
+                )
+
+                """
                 if left_right in ['both', 'left']:
                     self.theta_L += self.d_theta_L
                 if left_right in ['both', 'right']:
                     self.theta_R += self.d_theta_R
-            await self.displays.refresh()
+                """
+
+            # await self.displays.refresh()
             await asyncio.sleep(0.0001)
             iterations -= 1
         self.transitioning = False
@@ -377,6 +524,48 @@ class Eyes:
         """
         if mask:
             await self.blink('close')
+
+        actions_a = [
+            'self.exp_up_LL.y = self.u_ref + amount',
+            'self.exp_up_LR.y = self.u_ref + amount',
+        ]
+        actions_b = [
+            'self.exp_up_RL.y = self.u_ref + amount',
+            'self.exp_up_RR.y = self.u_ref + amount',
+        ]
+        actions_c = [
+            'self.exp_down_LL.y = self.d_ref - amount',
+            'self.exp_down_LR.y = self.d_ref - amount',
+        ]
+        actions_d = [
+            'self.exp_down_RL.y = self.d_ref - amount',
+            'self.exp_down_RR.y = self.d_ref - amount',
+        ]
+        await Decision.decision(
+            top_bottom,
+            ['both', 'top', 'bottom'],
+            (
+                Decision.decision,
+                (
+                    left_right,
+                    ['both', 'left', 'right'],
+                    actions_a,
+                    actions_b,
+                    (self.displays.refresh, ())
+                )
+            ),
+            (
+                Decision.decision,
+                (
+                    left_right,
+                    ['both', 'left', 'right'],
+                    actions_c,
+                    actions_d,
+                    (self.displays.refresh, ())
+                )
+            )
+        )
+        """
         if top_bottom in ['both', 'top']:
             if left_right in ['both', 'left']:
                 self.exp_up_LL.y = self.u_ref + amount
@@ -393,6 +582,7 @@ class Eyes:
                 self.exp_down_RL.y = self.d_ref - amount
                 self.exp_down_RR.y = self.d_ref - amount
             await self.displays.refresh()
+            """
         if mask:
             await self.blink('open')
         return self
@@ -415,7 +605,33 @@ class Eyes:
             amount += 25
         if amount < 0:
             amount -= 25
-        if top_bottom in ['both', 'top']:
+
+        await Decision.decision(
+            top_bottom,
+            ['both', 'top', 'bottom'],
+            (
+                Decision.decision,
+                (
+                    left_right,
+                    ['both', 'left', 'right'],
+                    ['self.exp_up_LL.x = self.l_ref + amount'],
+                    ['self.exp_up_LR.x = self.r_ref + amount'],
+                    (self.displays.refresh, ())
+                )
+            ),
+            (
+                Decision.decision,
+                (
+                    left_right,
+                    ['both', 'left', 'right'],
+                    ['self.exp_up_RL.x = self.l_ref + amount'],
+                    ['self.exp_up_RR.x = self.r_ref + amount'],
+                    (self.displays.refresh, ())
+                )
+            )
+        )
+        """
+        if top_bottom in ['both', 'top']:  # TODO: Loop?
             if left_right in ['both', 'left']:
                 if right_left in ['both', 'left']:
                     self.exp_up_LL.x = self.l_ref + amount
@@ -439,14 +655,26 @@ class Eyes:
                 if right_left in ['both', 'right']:
                     self.exp_down_RR.x = self.r_ref + amount
             await self.displays.refresh()
+        """
         if bug == 'none' and self.eyeball_L.x and self.eyeball_R.x:
             self.eyeball_L.x = 0
             self.eyeball_R.x = 0
+            await self.displays.refresh()
+        """
         if bug in ['both', 'left']:
             self.eyeball_L.x = 200
         if bug in ['both', 'right']:
             self.eyeball_R.x = 200
         await self.displays.refresh()
+        """
+
+        await Decision.decision(
+            bug,
+            ['both', 'left', 'right'],
+            ['self.eyeball_L.x = 200'],
+            ['self.eyeball_R.x = 200'],
+            (self.displays.refresh, ())
+        )
         if mask:
             await self.blink('open')
         return self
@@ -455,7 +683,31 @@ class Eyes:
         """
         Aptly named.
         """
-        if open_close in ['both', 'close']:
+        await Decision.decision(
+            open_close,
+            ['both', 'close', 'open'],
+            (
+                Decision.decision,
+                (
+                    left_right,
+                    ['both', 'left', 'right'],
+                    ['self.blink_L.x = 0'],
+                    ['self.blink_R.x = 0'],
+                    (self.displays.refresh, ())
+                ),
+            ),
+            (
+                Decision.decision(
+                    left_right,
+                    ['both', 'left', 'right']
+                    ['self.blink_L.x = -200'],
+                    ['self.blink_R.x = -200'],
+                    (self.displays.refresh, ())
+                )
+            )
+        )
+        """
+        if open_close in ['both', 'close']:  # TODO: Loop?
             if left_right in ['both', 'left']:
                 self.blink_L.x = 0
             if left_right in ['both', 'right']:
@@ -467,29 +719,55 @@ class Eyes:
             if left_right in ['both', 'right']:
                 self.blink_R.x = -200
             await self.displays.refresh()
+        """
         return self
 
     async def background_fill(self, fill: int = 0xffffff, left_right: HORIZONTALS = 'both'):
         """
         Changes the background color of the eyes.
         """
+        await Decision.decision(
+            left_right,
+            ['self.bg_L[0] = self.bg_l_fill = fill'],
+            ['self.bg_R[0] = self.bg_r_fill = fill'],
+            (self.displays.refresh, ())
+        )
+        """
         if left_right in ['both', 'left']:
             self.bg_L[0] = self.bg_l_fill = fill
         if left_right in ['both', 'right']:
             self.bg_R[0] = self.bg_r_fill = fill
         await self.displays.refresh()
+        """
         return self
 
     async def foreground_fill(self, fill: int = 0xffffff, left_right: HORIZONTALS = 'both'):
         """
         Changes the foreground blink color of the eyes.
         """
+        await Decision.decision(
+            left_right,
+            ['self.blink_pal_L[0] = fill'],
+            ['self.blink_pal_R[0] = fill'],
+            (self.displays.refresh, ())
+        )
+        """
         if left_right in ['both', 'left']:
             self.blink_pal_L[0] = fill
         if left_right in ['both', 'right']:
             self.blink_pal_R[0] = fill
         await self.displays.refresh()
+        """
         return self
+
+    @staticmethod
+    def if_none_random(variable: ICONS = None):
+        """
+        Just chooses a random icon when the variable is set to none.
+        """
+        if variable is None
+            variable = random.choice(ICONS)
+        return variable
 
     async def text_icon(
             self,
@@ -504,6 +782,7 @@ class Eyes:
         """
         self.transitioning = True
         await self.blink('close', left_right)
+        """"""  # TODO: Continue from here.
         if left_right in ['both', 'left']:
             if icon_left is None:
                 icon_left = random.choice(ICONS)
