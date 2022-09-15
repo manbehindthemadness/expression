@@ -10,9 +10,9 @@ import adafruit_imageload
 from adafruit_bitmap_font import bitmap_font  # noqa
 from adafruit_display_text import label  # noqa
 try:
-    from display import Display
+    from display import Display, waits
 except ImportError:
-    from .display import Display
+    from .display import Display, waits
 
 SIDES = ['left', 'right']
 VERTICALS = ['both', 'top', 'bottom']
@@ -27,6 +27,7 @@ class Eyes:
     """
     This is our fancy eye-control class.
     """
+    wait_1 = wait_2 = 0
 
     def __init__(
             self,
@@ -36,6 +37,8 @@ class Eyes:
             command0=board.D0,
             command1=board.D1,
     ):
+        self.waits = waits
+
         self.reset = reset
 
         self.cs0 = cs0
@@ -255,7 +258,7 @@ class Eyes:
                     self.iris_icon_R.x = self.iris_R.x
                     self.iris_icon_R.y = self.iris_R.y + 20
                 await self.displays.refresh()
-                await asyncio.sleep(0.0001)
+                self.wait_1 = await self.waits.wait(self.wait_1)
         else:
             if left_right in ['both', 'left']:
                 self.iris_L.x = x
@@ -334,7 +337,7 @@ class Eyes:
                 if left_right in ['both', 'right']:
                     self.theta_R += self.d_theta_R
             await self.displays.refresh()
-            await asyncio.sleep(0.0001)
+            self.wait_2 = await self.waits.wait(self.wait_2)
             iterations -= 1
         self.transitioning = False
         return self

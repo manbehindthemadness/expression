@@ -6,6 +6,11 @@ import busio
 import digitalio
 import displayio
 from adafruit_ssd1331 import SSD1331
+from equalizer import Equalizer  # noqa
+
+
+waits = Equalizer()
+wait = 0
 
 
 class Display:
@@ -81,7 +86,9 @@ class Display:
         Refreshes our screens.
         :return:
         """
+        global wait
         self.displays.reverse()
         for display in self.displays:
             await self._refresh(display)
+            wait = await waits.wait(wait)
         return self
