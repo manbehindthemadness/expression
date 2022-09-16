@@ -23,13 +23,16 @@ https://user-images.githubusercontent.com/24589462/189183387-5137dcc8-b593-4a2c-
 * Eye-shaping sprites in quadrants allowing for many, many variations
 * Eye-position transitions with variable speed
 * Eye-rotation transitions with variable speed and radius
-* Full complement of sweet icons from Love, Death+Robots 
+* Full complement of sweet icons from Love, Death+Robots and other royalty free sources.
   * https://uxuihero.com/love-death-robots-free-fan-iconfont/
 * Screensaver with slick transitions n jazz
 * Memory consumption of roughly 65kb
 
 
 # Typeset icons
+
+
+These options are available when using the expression.Eyes.iris_to_icon method. 
 
 
 ![icons](typeset.PNG)
