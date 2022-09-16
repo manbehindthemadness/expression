@@ -21,6 +21,14 @@ BUGS = ['none', 'left', 'right', 'both']
 OPENS = ['open', 'close', 'both']
 font = bitmap_font.load_font("expression/img/ldr.bdf", displayio.Bitmap)
 ICONS = list('abcdefghijklmnopqrstuvwx123456789')
+BL = ['both', 'left']
+BR = ['both', 'right']
+NL = ['none', 'left']
+NR = ['none', 'right']
+BT = ['both', 'top']
+BB = ['both', 'bottom']
+BC = ['both', 'close']
+BO = ['both', 'open']
 
 
 class Eyes:
@@ -32,10 +40,14 @@ class Eyes:
     def __init__(
             self,
             reset=board.D9,
-            cs0=board.D3,
-            cs1=board.D2,
-            command0=board.D0,
-            command1=board.D1,
+            cs0=board.D7,
+            cs1=board.D3,
+            command0=board.D4,
+            command1=board.D5,
+            clock0=board.SCK,
+            mosi0=board.MOSI,
+            clock1=None,
+            mosi1=None
     ):
         self.waits = waits
 
@@ -47,7 +59,10 @@ class Eyes:
         self.command0 = command0
         self.command1 = command1
 
-        self.displays = Display(self.reset, self.command0, self.command1, self.cs0, self.cs1)
+        self.displays = Display(
+            self.reset, self.command0, self.command1, self.cs0, self.cs1,
+            clock0, mosi0, clock1, mosi1
+        )
         self.displays.reset()
 
         self.dw, self.dh = 96, 64
@@ -209,36 +224,55 @@ class Eyes:
         return main, display, eyeball, iris, exp_up_left, exp_down_left, exp_up_right, exp_down_right, \
             bnk, blink_palette, bg_palette, text, iris_icon
 
+    @staticmethod
+    async def _range_x(item, des, speed, rng):
+        """
+        Calculate individual transition.
+        """
+        result = True
+        cur = item.x
+        if cur not in rng:
+            if des < cur:
+                item.x -= speed
+                result = False
+            if des > cur:
+                item.x += speed
+                result = False
+        return result
+
+    @staticmethod
+    async def _range_y(item, des, speed, rng):
+        """
+        Calculate individual transition.
+        """
+        result = True
+        cur = item.y
+        if cur not in rng:
+            if des < cur:
+                item.y -= speed
+                result = False
+            if des > cur:
+                item.y += speed
+                result = False
+        return result
+
+    async def transition(self, des_x: int, des_y: int, rng_x: range, rng_y: range, item: displayio.TileGrid, speed: int) -> bool:
+        """
+        Calculates transition.
+        """
+        result = await self._range_x(item, des_x, speed, rng_x)  # noqa
+        result = await self._range_y(item, des_y, speed, rng_y)
+        return result
+
     async def eye_position(self, x: int, y: int, left_right: HORIZONTALS = 'both', rate: int = 1) -> tuple[int, int]:
         """
         Updates the direction that our eyes are looking.
         """
 
-        def transition(des_x: int, des_y: int, item: displayio.TileGrid, speed: int) -> bool:
-            """
-            Calculates transition.
-            """
-            result = True
-            cur_x = item.x
-            if cur_x not in range(des_x - speed, des_x + speed):
-                if des_x < cur_x:
-                    item.x -= speed
-                    result = False
-                if des_x > cur_x:
-                    item.x += speed
-                    result = False
-            cur_y = item.y
-            if cur_y not in range(des_y - speed, des_y + speed):
-                if des_y < cur_y:
-                    item.y -= speed
-                    result = False
-                if des_y > cur_y:
-                    item.y += speed
-                    result = False
-            return result
-
         await self.wait()
         desired_x, desired_y = x - self.iris_mid_x, y - self.iris_mid_y
+        rng_x = range(desired_x - rate, desired_x + rate)
+        rng_y = range(desired_y - rate, desired_y + rate)
         self.transitioning = True
         criteria = [True]
         if left_right == 'both':
@@ -249,23 +283,23 @@ class Eyes:
             criteria = [True, False]
         if rate:
             while False in criteria:
-                if left_right in ['both', 'left']:
-                    criteria[0] = transition(desired_x, desired_y, self.iris_L, rate)
+                if left_right in BL:
+                    criteria[0] = await self.transition(desired_x, desired_y, rng_x, rng_y, self.iris_L, rate)
                     self.iris_icon_L.x = self.iris_L.x
                     self.iris_icon_L.y = self.iris_L.y + 20
-                if left_right in ['both', 'right']:
-                    criteria[1] = transition(desired_x, desired_y, self.iris_R, rate)
+                if left_right in BR:
+                    criteria[1] = await self.transition(desired_x, desired_y, rng_x, rng_y, self.iris_R, rate)
                     self.iris_icon_R.x = self.iris_R.x
                     self.iris_icon_R.y = self.iris_R.y + 20
                 await self.displays.refresh()
                 self.wait_1 = await self.waits.wait(self.wait_1)
         else:
-            if left_right in ['both', 'left']:
+            if left_right in BL:
                 self.iris_L.x = x
                 self.iris_L.y = y
                 self.iris_icon_L.x = self.iris_L.x
                 self.iris_icon_L.y = self.iris_L.y + 20
-            if left_right in ['both', 'right']:
+            if left_right in BR:
                 self.iris_R.x = x
                 self.iris_R.y = y
                 self.iris_icon_R.x = self.iris_R.x
@@ -286,25 +320,25 @@ class Eyes:
         """
         This will swap an iris for an icon.
         """
-        if left_right in ['both', 'left']:
+        if left_right in BL:
             if icon_l is None:
                 icon_l = random.choice(ICONS)
             self.iris_icon_L.text = icon_l
             self.iris_icon_L.color = color_l
             self.group_L.pop(1)
             self.group_L.insert(1, self.iris_icon_L)
-        if left_right in ['both', 'right']:
+        if left_right in BR:
             if icon_r is None:
                 icon_r = random.choice(ICONS)
             self.iris_icon_R.text = icon_r
             self.iris_icon_R.color = color_r
             self.group_R.pop(1)
             self.group_R.insert(1, self.iris_icon_R)
-        if left_right in ['none', 'left']:
+        if left_right in NL:
             self.group_R.pop(1)
             self.group_R.insert(1, self.iris_R)
             self.iris_icon_R.text = ''
-        if left_right in ['none', 'right']:
+        if left_right in NR:
             self.group_L.pop(1)
             self.group_L.insert(1, self.iris_L)
             self.iris_icon_L.text = ''
@@ -327,14 +361,14 @@ class Eyes:
             self.iris_R.x = self.iris_r_cx + int(rad * math.sin(self.theta_L))
             self.iris_R.y = self.iris_r_cy + int(rad * math.cos(self.theta_L))
             if direction == 'right':
-                if left_right in ['both', 'left']:
+                if left_right in BL:
                     self.theta_L -= self.d_theta_L
-                if left_right in ['both', 'right']:
+                if left_right in BR:
                     self.theta_R -= self.d_theta_R
             if direction == 'left':
-                if left_right in ['both', 'left']:
+                if left_right in BL:
                     self.theta_L += self.d_theta_L
-                if left_right in ['both', 'right']:
+                if left_right in BR:
                     self.theta_R += self.d_theta_R
             await self.displays.refresh()
             self.wait_2 = await self.waits.wait(self.wait_2)
@@ -380,19 +414,19 @@ class Eyes:
         """
         if mask:
             await self.blink('close')
-        if top_bottom in ['both', 'top']:
-            if left_right in ['both', 'left']:
+        if top_bottom in BT:
+            if left_right in BL:
                 self.exp_up_LL.y = self.u_ref + amount
                 self.exp_up_LR.y = self.u_ref + amount
-            if left_right in ['both', 'right']:
+            if left_right in BR:
                 self.exp_up_RL.y = self.u_ref + amount
                 self.exp_up_RR.y = self.u_ref + amount
             await self.displays.refresh()
-        if top_bottom in ['both', 'bottom']:
-            if left_right in ['both', 'left']:
+        if top_bottom in BB:
+            if left_right in BL:
                 self.exp_down_LL.y = self.d_ref - amount
                 self.exp_down_LR.y = self.d_ref - amount
-            if left_right in ['both', 'right']:
+            if left_right in BR:
                 self.exp_down_RL.y = self.d_ref - amount
                 self.exp_down_RR.y = self.d_ref - amount
             await self.displays.refresh()
@@ -418,36 +452,36 @@ class Eyes:
             amount += 25
         if amount < 0:
             amount -= 25
-        if top_bottom in ['both', 'top']:
-            if left_right in ['both', 'left']:
-                if right_left in ['both', 'left']:
+        if top_bottom in BT:
+            if left_right in BL:
+                if right_left in BL:
                     self.exp_up_LL.x = self.l_ref + amount
-                if right_left in ['both', 'right']:
+                if right_left in BR:
                     self.exp_up_LR.x = self.r_ref + amount
-            if left_right in ['both', 'right']:
-                if right_left in ['both', 'left']:
+            if left_right in BR:
+                if right_left in BL:
                     self.exp_up_RL.x = self.l_ref + amount
-                if right_left in ['both', 'right']:
+                if right_left in BR:
                     self.exp_up_RR.x = self.r_ref + amount
             await self.displays.refresh()
-        if top_bottom in ['both', 'bottom']:
-            if left_right in ['both', 'left']:
-                if right_left in ['both', 'left']:
+        if top_bottom in BB:
+            if left_right in BL:
+                if right_left in BL:
                     self.exp_down_LL.x = self.l_ref + amount
-                if right_left in ['both', 'right']:
+                if right_left in BR:
                     self.exp_down_LR.x = self.r_ref + amount
-            if left_right in ['both', 'right']:
-                if right_left in ['both', 'left']:
+            if left_right in BR:
+                if right_left in BL:
                     self.exp_down_RL.x = self.l_ref + amount
-                if right_left in ['both', 'right']:
+                if right_left in BR:
                     self.exp_down_RR.x = self.r_ref + amount
             await self.displays.refresh()
         if bug == 'none' and self.eyeball_L.x and self.eyeball_R.x:
             self.eyeball_L.x = 0
             self.eyeball_R.x = 0
-        if bug in ['both', 'left']:
+        if bug in BL:
             self.eyeball_L.x = 200
-        if bug in ['both', 'right']:
+        if bug in BR:
             self.eyeball_R.x = 200
         await self.displays.refresh()
         if mask:
@@ -458,16 +492,16 @@ class Eyes:
         """
         Aptly named.
         """
-        if open_close in ['both', 'close']:
-            if left_right in ['both', 'left']:
+        if open_close in BC:
+            if left_right in BL:
                 self.blink_L.x = 0
-            if left_right in ['both', 'right']:
+            if left_right in BR:
                 self.blink_R.x = 0
             await self.displays.refresh()
-        if open_close in ['both', 'open']:
-            if left_right in ['both', 'left']:
+        if open_close in BO:
+            if left_right in BL:
                 self.blink_L.x = -200
-            if left_right in ['both', 'right']:
+            if left_right in BR:
                 self.blink_R.x = -200
             await self.displays.refresh()
         return self
@@ -476,9 +510,9 @@ class Eyes:
         """
         Changes the background color of the eyes.
         """
-        if left_right in ['both', 'left']:
+        if left_right in BL:
             self.bg_L[0] = self.bg_l_fill = fill
-        if left_right in ['both', 'right']:
+        if left_right in BR:
             self.bg_R[0] = self.bg_r_fill = fill
         await self.displays.refresh()
         return self
@@ -487,9 +521,9 @@ class Eyes:
         """
         Changes the foreground blink color of the eyes.
         """
-        if left_right in ['both', 'left']:
+        if left_right in BL:
             self.blink_pal_L[0] = fill
-        if left_right in ['both', 'right']:
+        if left_right in BR:
             self.blink_pal_R[0] = fill
         await self.displays.refresh()
         return self
@@ -507,14 +541,14 @@ class Eyes:
         """
         self.transitioning = True
         await self.blink('close', left_right)
-        if left_right in ['both', 'left']:
+        if left_right in BL:
             if icon_left is None:
                 icon_left = random.choice(ICONS)
             self.text_L.text = icon_left
             self.text_L.color = self.bg_l_fill
             self.text_L.x = self.iris_L.x
             self.text_L.y = self.iris_L.y + 20
-        if left_right in ['both', 'right']:
+        if left_right in BR:
             if icon_right is None:
                 icon_right = random.choice(ICONS)
             self.text_R.text = icon_right
@@ -524,11 +558,11 @@ class Eyes:
         await self.displays.refresh()
         await asyncio.sleep(length)
         if _open:
-            if left_right in ['both', 'left']:
+            if left_right in BL:
                 self.text_L.text = ''
                 self.text_L.x = -100
                 self.text_L.y = 0
-            if left_right in ['both', 'right']:
+            if left_right in BR:
                 self.text_R.text = ''
                 self.text_R.x = -100
                 self.text_R.y = 0

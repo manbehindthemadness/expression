@@ -3,6 +3,7 @@ Lets give a drone some eyes...
 """
 import gc
 import random
+import board
 import asyncio
 try:
     from eyes import Eyes
@@ -19,7 +20,7 @@ def test():
         A loop!
         :return:
         """
-        e = Eyes()
+        e = Eyes(clock1=board.D0, mosi1=board.D1)
 
         verticals = ['both', 'top', 'bottom']
         horizontals = ['both', 'left', 'right']
@@ -50,12 +51,12 @@ def test():
                         mask=True  # Mask the transition by blinking.
                     )
 
-                if not random.randint(0, 10):
+                if not random.randint(0, 5):
                     await e.eye_position(
                         x=random.randint(25, 71),
                         y=random.randint(25, 39),
                         left_right=random.choice(eyes),  # Left, right, or both eyes.
-                        rate=random.randint(4, 8)  # Speed of movement.
+                        rate=random.randint(1, 10)  # Speed of movement.
                     )
 
                 if not random.randint(0, 2):
