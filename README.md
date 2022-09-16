@@ -28,5 +28,12 @@ https://user-images.githubusercontent.com/24589462/189183387-5137dcc8-b593-4a2c-
 * Screensaver with slick transitions n jazz
 * Memory consumption of roughly 65kb
 
+
+# Typeset icons
+
+
+![icons](typeset.PNG)
+
+
 https://user-images.githubusercontent.com/24589462/188916559-694f9836-d02d-4c66-961c-4be286e1a1f8.mp4
 
