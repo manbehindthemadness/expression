@@ -53,8 +53,8 @@ def test():
 
                 if not random.randint(0, 5):
                     await e.eye_position(
-                        x=random.randint(25, 71),
-                        y=random.randint(25, 39),
+                        x=random.randint(-75, 75),
+                        y=random.randint(-75, 75),
                         left_right=random.choice(eyes),  # Left, right, or both eyes.
                         rate=random.randint(1, 10)  # Speed of movement.
                     )

@@ -31,6 +31,43 @@ BC = ['both', 'close']
 BO = ['both', 'open']
 
 
+def percent_of(percent, whole, use_float=False):
+    """
+    Generic math method
+    """
+    result = (percent * whole) / 100
+    # result = np.divide(np.multiply(percent, whole), 100.0)
+    if not use_float:
+        result = int(result)
+    return result
+
+
+def percent_in(part, whole, use_float=False):
+    """
+    Generic math method
+    """
+    result = 100 * (part / whole)
+    if not use_float:
+        result = int(result)
+    return result
+
+
+def percentage_center(scaler: int, constant: int) -> int:
+    """
+    Offsets a zero position to be in the center of the constant.
+    """
+    scaler = (percent_of(scaler, constant, True) / 2) + (constant / 2)
+    return int(scaler)
+
+
+def center_percentage(scaler: int, constant: int) -> int:
+    """
+    reverses the above.
+    """
+    scaler = (percent_in(scaler, constant, True) * 2) - (constant / 2)
+    return int(scaler)
+
+
 class Eyes:
     """
     This is our fancy eye-control class.
@@ -268,7 +305,8 @@ class Eyes:
         """
         Updates the direction that our eyes are looking.
         """
-
+        x = percentage_center(x, self.dw)
+        y = percentage_center(y, self.dh)
         await self.wait()
         desired_x, desired_y = x - self.iris_mid_x, y - self.iris_mid_y
         rng_x = range(desired_x - rate, desired_x + rate)
@@ -295,13 +333,13 @@ class Eyes:
                 self.wait_1 = await self.waits.wait(self.wait_1)
         else:
             if left_right in BL:
-                self.iris_L.x = x
-                self.iris_L.y = y
+                self.iris_L.x = desired_x
+                self.iris_L.y = desired_y
                 self.iris_icon_L.x = self.iris_L.x
                 self.iris_icon_L.y = self.iris_L.y + 20
             if left_right in BR:
-                self.iris_R.x = x
-                self.iris_R.y = y
+                self.iris_R.x = desired_x
+                self.iris_R.y = desired_y
                 self.iris_icon_R.x = self.iris_R.x
                 self.iris_icon_R.y = self.iris_R.y + 20
         self.left_anchor = self.iris_L.x, self.iris_L.y
@@ -595,26 +633,26 @@ class Eyes:
             await self.background_fill(0x000000)
             await self.squint(0)
             await self.glance(0, bug='both')
-            await self.eye_position(x=46, y=-70, rate=0)
+            await self.eye_position(x=0, y=-185, rate=0)
             await self.iris_to_icon(left_right='both', color_l=0xffffff, color_r=0xffffff, icon_l=self.left_icon, icon_r=self.right_icon)
             await self.blink('open')
-        if self.iris_L.y == 92:
-            await self.eye_position(x=46, y=-70, left_right='left', rate=0)
+        if self.iris_L.y == 65:
+            await self.eye_position(x=0, y=-185, left_right='left', rate=0)
             self.left_icon = random.choice(ICONS)
-        if self.iris_R.y == 92:
-            await self.eye_position(x=46, y=-70, left_right='right', rate=0)
+        if self.iris_R.y == 65:
+            await self.eye_position(x=0, y=-185, left_right='right', rate=0)
             self.right_icon = random.choice(ICONS)
         await self.iris_to_icon(left_right='both', color_l=0xffffff, color_r=0xffffff, icon_l=self.left_icon, icon_r=self.right_icon)
-        await self.eye_position(x=46, y=35, rate=3)
+        await self.eye_position(x=0, y=0, rate=3)
         await asyncio.sleep(2)
-        await self.eye_position(x=46, y=120, left_right=random.choice(HORIZONTALS), rate=3)
+        await self.eye_position(x=0, y=185, left_right=random.choice(HORIZONTALS), rate=3)
         await asyncio.sleep(0.5)
         if end:
-            self.screen_saving = False
             await self.blink('closed')
             await self.background_fill()
             await self.glance(0)
             await self.iris_to_icon()
-            await self.eye_position(x=self.iris_l_cx, y=self.iris_l_cy, rate=0)
+            await self.eye_position(x=0, y=0, rate=0)
             await self.blink('open')
+            self.screen_saving = False
         return self
