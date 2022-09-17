@@ -172,14 +172,22 @@ class Eyes:
         self.bg_r_fill = 0xffffff
 
         self.ilr_min_y = -15
+        self.ilr_min_y_ref = int(self.ilr_min_y)
         self.ilr_max_y = 25
+        self.ilr_max_y_ref = int(self.ilr_max_y)
         self.ilr_min_x = -15
+        self.ilr_min_x_ref = int(self.ilr_min_x)
         self.ilr_max_x = 61
+        self.ilr_max_x_ref = int(self.ilr_max_x)
 
         self.irr_min_y = -15
+        self.irr_min_y_ref = int(self.irr_min_y)
         self.irr_max_y = 25
+        self.irr_max_y_ref = int(self.irr_max_y)
         self.irr_min_x = -15
+        self.irr_min_x_ref = int(self.irr_min_x)
         self.irr_max_x = 61
+        self.irr_max_x_ref = int(self.irr_max_x)
 
         self.left_icon = self.right_icon = None
 
@@ -486,21 +494,39 @@ class Eyes:
         amount = percent_of(amount, 27)
         if mask:
             await self.blink('close')
+        ada = self.u_ref + amount
+        adb = self.d_ref - amount
         if top_bottom in BT:
             if left_right in BL:
-                self.exp_up_LL.y = self.u_ref + amount
-                self.exp_up_LR.y = self.u_ref + amount
+                self.exp_up_LL.y = ada
+                self.exp_up_LR.y = ada
+                if amount > 0:
+                    self.ilr_min_y = int(self.ilr_min_y_ref + amount)
+                else:
+                    self.ilr_min_y = self.ilr_min_y_ref
             if left_right in BR:
-                self.exp_up_RL.y = self.u_ref + amount
-                self.exp_up_RR.y = self.u_ref + amount
+                self.exp_up_RL.y = ada
+                self.exp_up_RR.y = ada
+                if amount > 0:
+                    self.irr_min_y = int(self.irr_min_y_ref + amount)
+                else:
+                    self.irr_min_y = self.irr_min_y_ref
             await self.displays.refresh()
         if top_bottom in BB:
             if left_right in BL:
-                self.exp_down_LL.y = self.d_ref - amount
-                self.exp_down_LR.y = self.d_ref - amount
+                self.exp_down_LL.y = adb
+                self.exp_down_LR.y = adb
+                if amount > 0:
+                    self.ilr_max_y = int(self.ilr_max_y_ref - amount)
+                else:
+                    self.ilr_max_y = self.ilr_max_y_ref
             if left_right in BR:
-                self.exp_down_RL.y = self.d_ref - amount
-                self.exp_down_RR.y = self.d_ref - amount
+                self.exp_down_RL.y = adb
+                self.exp_down_RR.y = adb
+                if amount > 0:
+                    self.irr_max_y = int(self.irr_max_y_ref - amount)
+                else:
+                    self.irr_max_y = self.irr_max_y_ref
             await self.displays.refresh()
         if mask:
             await self.blink('open')
@@ -664,26 +690,26 @@ class Eyes:
             await self.background_fill(0x000000)
             await self.squint(0)
             await self.glance(0, bug='both')
-            await self.eye_position(x=0, y=-185, rate=0)
+            await self.eye_position(x=0, y=-185, rate=0, const=False)
             await self.iris_to_icon(left_right='both', color_l=0xffffff, color_r=0xffffff, icon_l=self.left_icon, icon_r=self.right_icon)
             await self.blink('open')
         if self.iris_L.y == 65:
-            await self.eye_position(x=0, y=-185, left_right='left', rate=0)
+            await self.eye_position(x=0, y=-185, left_right='left', rate=0, const=False)
             self.left_icon = random.choice(ICONS)
         if self.iris_R.y == 65:
-            await self.eye_position(x=0, y=-185, left_right='right', rate=0)
+            await self.eye_position(x=0, y=-185, left_right='right', rate=0, const=False)
             self.right_icon = random.choice(ICONS)
         await self.iris_to_icon(left_right='both', color_l=0xffffff, color_r=0xffffff, icon_l=self.left_icon, icon_r=self.right_icon)
-        await self.eye_position(x=0, y=0, rate=3)
+        await self.eye_position(x=0, y=0, rate=3, const=False)
         await asyncio.sleep(2)
-        await self.eye_position(x=0, y=185, left_right=random.choice(HORIZONTALS), rate=3)
+        await self.eye_position(x=0, y=185, left_right=random.choice(HORIZONTALS), rate=3, const=False)
         await asyncio.sleep(0.5)
         if end:
             await self.blink('closed')
             await self.background_fill()
             await self.glance(0)
             await self.iris_to_icon()
-            await self.eye_position(x=0, y=0, rate=0)
+            await self.eye_position(x=0, y=0, rate=0, const=False)
             await self.blink('open')
             self.screen_saving = False
         return self
