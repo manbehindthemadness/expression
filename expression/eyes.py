@@ -547,29 +547,61 @@ class Eyes:
         amount = percent_of(amount, 56)
         if mask:
             await self.blink('close')
-        if top_bottom in BT:
+        if top_bottom in BT:  # noqa
             if left_right in BL:
                 if right_left in BL:
                     self.exp_up_LL.x = self.l_ref + amount
+                    if amount > 0:
+                        self.ilr_min_x = int(self.ilr_min_x_ref + amount)
+                    else:
+                        self.ilr_min_x = self.ilr_min_x_ref
                 if right_left in BR:
                     self.exp_up_LR.x = self.r_ref - amount
+                    if amount > 0:
+                        self.ilr_max_x = int(self.ilr_max_x_ref - amount)
+                    else:
+                        self.ilr_max_x = self.ilr_max_x_ref
             if left_right in BR:
                 if right_left in BL:
                     self.exp_up_RL.x = self.l_ref + amount
+                    if amount > 0:
+                        self.irr_min_x = int(self.irr_min_x_ref + amount)
+                    else:
+                        self.irr_min_x = self.irr_min_x_ref
                 if right_left in BR:
                     self.exp_up_RR.x = self.r_ref - amount
+                    if amount > 0:
+                        self.irr_max_x = int(self.irr_max_x_ref - amount)
+                    else:
+                        self.irr_max_x = self.irr_max_x_ref
             await self.displays.refresh()
-        if top_bottom in BB:
+        if top_bottom in BB:  # noqa
             if left_right in BL:
                 if right_left in BL:
                     self.exp_down_LL.x = self.l_ref + amount
+                    if amount > 0:
+                        self.ilr_min_x = int(self.ilr_min_x_ref + amount)
+                    else:
+                        self.ilr_min_x = self.ilr_min_x_ref
                 if right_left in BR:
                     self.exp_down_LR.x = self.r_ref - amount
+                    if amount > 0:
+                        self.ilr_max_x = int(self.ilr_max_x_ref - amount)
+                    else:
+                        self.ilr_max_x = self.ilr_max_x_ref
             if left_right in BR:
                 if right_left in BL:
                     self.exp_down_RL.x = self.l_ref + amount
+                    if amount > 0:
+                        self.irr_min_x = int(self.irr_min_x_ref + amount)
+                    else:
+                        self.irr_min_x = self.irr_min_x_ref
                 if right_left in BR:
                     self.exp_down_RR.x = self.r_ref - amount
+                    if amount > 0:
+                        self.irr_max_x = int(self.irr_max_x_ref - amount)
+                    else:
+                        self.irr_max_x = self.irr_max_x_ref
             await self.displays.refresh()
         if bug == 'none' and self.eyeball_L.x and self.eyeball_R.x:
             self.eyeball_L.x = 0
