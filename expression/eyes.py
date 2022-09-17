@@ -171,6 +171,16 @@ class Eyes:
         self.bg_l_fill = 0xffffff
         self.bg_r_fill = 0xffffff
 
+        self.ilr_min_y = -15
+        self.ilr_max_y = 25
+        self.ilr_min_x = -15
+        self.ilr_max_x = 61
+
+        self.irr_min_y = -15
+        self.irr_max_y = 25
+        self.irr_min_x = -15
+        self.irr_max_x = 61
+
         self.left_icon = self.right_icon = None
 
         self.transitioning = False
@@ -301,7 +311,7 @@ class Eyes:
         result = await self._range_y(item, des_y, speed, rng_y)
         return result
 
-    async def eye_position(self, x: int, y: int, left_right: HORIZONTALS = 'both', rate: int = 1) -> tuple[int, int]:
+    async def eye_position(self, x: int, y: int, left_right: HORIZONTALS = 'both', rate: int = 1, const: bool = True) -> tuple[int, int]:
         """
         Updates the direction that our eyes are looking.
         """
@@ -309,8 +319,31 @@ class Eyes:
         y = percentage_center(y, self.dh)
         await self.wait()
         desired_x, desired_y = x - self.iris_mid_x, y - self.iris_mid_y
-        rng_x = range(desired_x - rate, desired_x + rate)
-        rng_y = range(desired_y - rate, desired_y + rate)
+        des_l_x = des_r_x = desired_x
+        des_l_y = des_r_y = desired_y
+        if const:  # Handle position restrictions.
+            if des_l_x < self.ilr_min_x:
+                des_l_x = self.ilr_min_x
+            if des_l_x > self.ilr_max_x:
+                des_l_x = self.ilr_max_x
+            if des_l_y < self.ilr_min_y:
+                des_l_y = self.ilr_min_y
+            if des_l_y > self.ilr_max_y:
+                des_l_y = self.ilr_max_y
+
+            if des_r_x < self.irr_min_x:
+                des_r_x = self.irr_min_x
+            if des_r_x > self.irr_max_x:
+                des_r_x = self.irr_max_x
+            if des_r_y < self.irr_min_y:
+                des_r_y = self.irr_min_y
+            if des_r_y > self.irr_max_y:
+                des_r_y = self.irr_max_y
+
+        rng_l_x = range(des_l_x - rate, des_l_x + rate)
+        rng_l_y = range(des_l_y - rate, des_l_y + rate)
+        rng_r_x = range(des_r_x - rate, des_r_x + rate)
+        rng_r_y = range(des_r_y - rate, des_r_y + rate)
         self.transitioning = True
         criteria = [True]
         if left_right == 'both':
@@ -322,24 +355,24 @@ class Eyes:
         if rate:
             while False in criteria:
                 if left_right in BL:
-                    criteria[0] = await self.transition(desired_x, desired_y, rng_x, rng_y, self.iris_L, rate)
+                    criteria[0] = await self.transition(des_l_x, des_l_y, rng_l_x, rng_l_y, self.iris_L, rate)
                     self.iris_icon_L.x = self.iris_L.x
                     self.iris_icon_L.y = self.iris_L.y + 20
                 if left_right in BR:
-                    criteria[1] = await self.transition(desired_x, desired_y, rng_x, rng_y, self.iris_R, rate)
+                    criteria[1] = await self.transition(des_r_x, des_r_y, rng_r_x, rng_r_y, self.iris_R, rate)
                     self.iris_icon_R.x = self.iris_R.x
                     self.iris_icon_R.y = self.iris_R.y + 20
                 await self.displays.refresh()
                 self.wait_1 = await self.waits.wait(self.wait_1)
         else:
             if left_right in BL:
-                self.iris_L.x = desired_x
-                self.iris_L.y = desired_y
+                self.iris_L.x = des_l_x
+                self.iris_L.y = des_l_y
                 self.iris_icon_L.x = self.iris_L.x
                 self.iris_icon_L.y = self.iris_L.y + 20
             if left_right in BR:
-                self.iris_R.x = desired_x
-                self.iris_R.y = desired_y
+                self.iris_R.x = des_r_x
+                self.iris_R.y = des_r_y
                 self.iris_icon_R.x = self.iris_R.x
                 self.iris_icon_R.y = self.iris_R.y + 20
         self.left_anchor = self.iris_L.x, self.iris_L.y
