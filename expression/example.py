@@ -35,7 +35,7 @@ def test():
             try:
                 if not random.randint(0, 25):
                     await e.squint(  # Note that the squint sprites are in halves, top and bottom.
-                        amount=random.randint(0, 10),  # Intensity of the expression.
+                        amount=random.randint(0, 100),  # Intensity of the expression.
                         top_bottom=random.choice(verticals),  # Top or bottom lid(s).
                         left_right=random.choice(horizontals),  # Left or right lid(s).
                         mask=True  # Mask the transition by blinking.
@@ -43,7 +43,7 @@ def test():
 
                 if not random.randint(0, 25):
                     await e.glance(  # Note that the glance sprites are in quadrants.
-                        amount=random.randint(-15, 15),  # Intensity of the expression.
+                        amount=random.randint(0, 100),  # Intensity of the expression.
                         top_bottom=random.choice(verticals),  # Top or bottom lid(s).
                         left_right=random.choice(horizontals),  # Left or right lid(s).
                         right_left=random.choice(horizontals),  # Left or right lid-halves.

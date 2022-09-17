@@ -165,8 +165,8 @@ class Eyes:
 
         self.u_ref = -28
         self.d_ref = -5
-        self.l_ref = -60
-        self.r_ref = -6
+        self.l_ref = -56
+        self.r_ref = -10
 
         self.bg_l_fill = 0xffffff
         self.bg_r_fill = 0xffffff
@@ -235,11 +235,11 @@ class Eyes:
         eyeball = displayio.TileGrid(eyeball_bitmap, pixel_shader=eyeball_pal)
         iris = displayio.TileGrid(self.iris_bitmap, pixel_shader=self.iris_pal, x=self.iris_l_cx, y=self.iris_l_cy)
 
-        exp_up_left = displayio.TileGrid(self.exp_top_left, pixel_shader=self.exp_top_left_pal, x=-60, y=-26)
+        exp_up_left = displayio.TileGrid(self.exp_top_left, pixel_shader=self.exp_top_left_pal, x=-60, y=-27)
         exp_down_left = displayio.TileGrid(self.exp_bottom_left, pixel_shader=self.exp_bottom_left_pal, x=-60, y=-5)
 
-        exp_up_right = displayio.TileGrid(self.exp_top_right, pixel_shader=self.exp_top_right_pal, x=-6, y=-26)
-        exp_down_right = displayio.TileGrid(self.exp_bottom_right, pixel_shader=self.exp_bottom_right_pal, x=-6, y=-5)
+        exp_up_right = displayio.TileGrid(self.exp_top_right, pixel_shader=self.exp_top_right_pal, x=-6, y=-27)
+        exp_down_right = displayio.TileGrid(self.exp_bottom_right, pixel_shader=self.exp_bottom_right_pal, x=-6, y=-4)
 
         bnk = displayio.TileGrid(blink, pixel_shader=blink_palette)
 
@@ -485,35 +485,32 @@ class Eyes:
         """
         Like squint but for diagonal expressions.
         """
+        amount = percent_of(amount, 56)
         if mask:
             await self.blink('close')
-        if amount > 0:
-            amount += 25
-        if amount < 0:
-            amount -= 25
         if top_bottom in BT:
             if left_right in BL:
                 if right_left in BL:
                     self.exp_up_LL.x = self.l_ref + amount
                 if right_left in BR:
-                    self.exp_up_LR.x = self.r_ref + amount
+                    self.exp_up_LR.x = self.r_ref - amount
             if left_right in BR:
                 if right_left in BL:
                     self.exp_up_RL.x = self.l_ref + amount
                 if right_left in BR:
-                    self.exp_up_RR.x = self.r_ref + amount
+                    self.exp_up_RR.x = self.r_ref - amount
             await self.displays.refresh()
         if top_bottom in BB:
             if left_right in BL:
                 if right_left in BL:
                     self.exp_down_LL.x = self.l_ref + amount
                 if right_left in BR:
-                    self.exp_down_LR.x = self.r_ref + amount
+                    self.exp_down_LR.x = self.r_ref - amount
             if left_right in BR:
                 if right_left in BL:
                     self.exp_down_RL.x = self.l_ref + amount
                 if right_left in BR:
-                    self.exp_down_RR.x = self.r_ref + amount
+                    self.exp_down_RR.x = self.r_ref - amount
             await self.displays.refresh()
         if bug == 'none' and self.eyeball_L.x and self.eyeball_R.x:
             self.eyeball_L.x = 0
