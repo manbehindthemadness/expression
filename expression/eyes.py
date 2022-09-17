@@ -163,7 +163,7 @@ class Eyes:
         self.theta_L, self.theta_R = 0, 0  # left & right eye rotational position
         self.d_theta_L, self.d_theta_R = 0.25, 0.25  # how fast left & right eyes spins
 
-        self.u_ref = -26
+        self.u_ref = -28
         self.d_ref = -5
         self.l_ref = -60
         self.r_ref = -6
@@ -450,6 +450,7 @@ class Eyes:
         """
         Makes a squint expression.
         """
+        amount = percent_of(amount, 27)
         if mask:
             await self.blink('close')
         if top_bottom in BT:
