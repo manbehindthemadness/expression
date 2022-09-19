@@ -561,9 +561,9 @@ class Eyes:
                 else:
                     self.irr_max_y = self.irr_max_y_ref
             await self.displays.refresh()
+        await self.correct_eye_position()
         if mask:
             await self.blink('open')
-        await self.correct_eye_position()
         return self
 
     async def glance(
@@ -645,9 +645,9 @@ class Eyes:
         if bug in BR:
             self.eyeball_R.x = 200
         await self.displays.refresh()
+        await self.correct_eye_position()
         if mask:
             await self.blink('open')
-        await self.correct_eye_position()
         return self
 
     async def blink(self, open_close: OPENS = 'both', left_right: HORIZONTALS = 'both'):
@@ -767,7 +767,7 @@ class Eyes:
             await self.eye_position(x=0, y=-185, left_right='right', rate=0, const=False)
             self.right_icon = random.choice(ICONS)
         await self.iris_to_icon(left_right='both', color_l=0xffffff, color_r=0xffffff, icon_l=self.left_icon, icon_r=self.right_icon)
-        await self.eye_position(x=0, y=7, rate=3, const=False)
+        await self.eye_position(x=0, y=10, rate=3, const=False)
         await asyncio.sleep(2)
         await self.eye_position(x=0, y=185, left_right=random.choice(HORIZONTALS), rate=3, const=False)
         await asyncio.sleep(0.5)
