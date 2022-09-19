@@ -194,6 +194,11 @@ class Eyes:
         self.transitioning = False
         self.screen_saving = False
 
+        self.last_ir_l_x = (0, 0)
+        self.last_ir_l_y = (0, 0)
+        self.last_ir_r_x = (0, 0)
+        self.last_ir_r_y = (0, 0)
+
     async def wait(self):
         """
         Waits for a transition to complete.
@@ -360,33 +365,61 @@ class Eyes:
             criteria = [False, True]
         if left_right == 'right':
             criteria = [True, False]
+        change = False
         if rate:
             while False in criteria:
                 if left_right in BL:
-                    criteria[0] = await self.transition(des_l_x, des_l_y, rng_l_x, rng_l_y, self.iris_L, rate)
-                    self.iris_icon_L.x = self.iris_L.x
-                    self.iris_icon_L.y = self.iris_L.y + 20
+                    criteria[0] = True
+                    if des_l_x != self.last_ir_l_x[0] or des_l_y != self.last_ir_l_y[0]:
+                        change = True
+                        criteria[0] = await self.transition(des_l_x, des_l_y, rng_l_x, rng_l_y, self.iris_L, rate)
+                        self.iris_icon_L.x = self.iris_L.x
+                        self.iris_icon_L.y = self.iris_L.y + 20
                 if left_right in BR:
-                    criteria[1] = await self.transition(des_r_x, des_r_y, rng_r_x, rng_r_y, self.iris_R, rate)
-                    self.iris_icon_R.x = self.iris_R.x
-                    self.iris_icon_R.y = self.iris_R.y + 20
+                    criteria[1] = True
+                    if des_r_x != self.last_ir_r_x[0] or des_r_y != self.last_ir_r_y[0]:
+                        change = True
+                        criteria[1] = await self.transition(des_r_x, des_r_y, rng_r_x, rng_r_y, self.iris_R, rate)
+                        self.iris_icon_R.x = self.iris_R.x
+                        self.iris_icon_R.y = self.iris_R.y + 20
                 await self.displays.refresh()
                 self.wait_1 = await self.waits.wait(self.wait_1)
         else:
             if left_right in BL:
-                self.iris_L.x = des_l_x
-                self.iris_L.y = des_l_y
-                self.iris_icon_L.x = self.iris_L.x
-                self.iris_icon_L.y = self.iris_L.y + 20
+                if des_l_x != self.last_ir_l_x[0] or des_l_y != self.last_ir_l_y[0]:
+                    change = True
+                    self.iris_L.x = des_l_x
+                    self.iris_L.y = des_l_y
+                    self.iris_icon_L.x = self.iris_L.x
+                    self.iris_icon_L.y = self.iris_L.y + 20
             if left_right in BR:
-                self.iris_R.x = des_r_x
-                self.iris_R.y = des_r_y
-                self.iris_icon_R.x = self.iris_R.x
-                self.iris_icon_R.y = self.iris_R.y + 20
-        self.left_anchor = self.iris_L.x, self.iris_L.y
-        self.right_anchor = self.iris_R.x, self.iris_R.y
+                if des_r_x != self.last_ir_r_x[0] or des_r_y != self.last_ir_r_y[0]:
+                    change = True
+                    self.iris_R.x = des_r_x
+                    self.iris_R.y = des_r_y
+                    self.iris_icon_R.x = self.iris_R.x
+                    self.iris_icon_R.y = self.iris_R.y + 20
+        if change:
+            self.left_anchor = self.iris_L.x, self.iris_L.y
+            self.right_anchor = self.iris_R.x, self.iris_R.y
         self.transitioning = False
+
+        if left_right in BL:
+            self.last_ir_l_x = (des_l_x, x)
+            self.last_ir_l_y = (des_l_y, y)
+        if left_right in BR:
+            self.last_ir_r_x = (des_r_x, x)
+            self.last_ir_r_y = (des_r_y, y)
+
         return int(self.iris_L.x), int(self.iris_R.y)
+
+    async def correct_eye_position(self):
+        """
+        Checks and confirms that the pupils are in the viewable area
+        """
+        await self.eye_position(self.last_ir_l_x[1], self.last_ir_l_y[1], 'left', rate=0)
+        await self.eye_position(self.last_ir_r_x[1], self.last_ir_r_y[1], 'right', rate=0)
+        return self
 
     async def iris_to_icon(
             self,
@@ -530,6 +563,7 @@ class Eyes:
             await self.displays.refresh()
         if mask:
             await self.blink('open')
+        await self.correct_eye_position()
         return self
 
     async def glance(
@@ -613,6 +647,7 @@ class Eyes:
         await self.displays.refresh()
         if mask:
             await self.blink('open')
+        await self.correct_eye_position()
         return self
 
     async def blink(self, open_close: OPENS = 'both', left_right: HORIZONTALS = 'both'):
@@ -732,7 +767,7 @@ class Eyes:
             await self.eye_position(x=0, y=-185, left_right='right', rate=0, const=False)
             self.right_icon = random.choice(ICONS)
         await self.iris_to_icon(left_right='both', color_l=0xffffff, color_r=0xffffff, icon_l=self.left_icon, icon_r=self.right_icon)
-        await self.eye_position(x=0, y=0, rate=3, const=False)
+        await self.eye_position(x=0, y=7, rate=3, const=False)
         await asyncio.sleep(2)
         await self.eye_position(x=0, y=185, left_right=random.choice(HORIZONTALS), rate=3, const=False)
         await asyncio.sleep(0.5)
