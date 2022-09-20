@@ -27,6 +27,7 @@ https://user-images.githubusercontent.com/24589462/189183387-5137dcc8-b593-4a2c-
   * https://uxuihero.com/love-death-robots-free-fan-iconfont/
 * Screensaver with slick transitions n jazz
 * Memory consumption of roughly 65kb
+* Movement constrained to the viewable area (no wandering)
 
 
 # Typeset icons
