@@ -767,7 +767,7 @@ class Eyes:
             await self.eye_position(x=0, y=-185, left_right='right', rate=0, const=False)
             self.right_icon = random.choice(ICONS)
         await self.iris_to_icon(left_right='both', color_l=0xffffff, color_r=0xffffff, icon_l=self.left_icon, icon_r=self.right_icon)
-        await self.eye_position(x=0, y=10, rate=3, const=False)
+        await self.eye_position(x=0, y=104, rate=3, const=False)
         await asyncio.sleep(2)
         await self.eye_position(x=0, y=185, left_right=random.choice(HORIZONTALS), rate=3, const=False)
         await asyncio.sleep(0.5)
